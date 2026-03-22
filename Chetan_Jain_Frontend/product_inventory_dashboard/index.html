@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Inventory Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Main header -->
+    <header class="main-header">
+        <h1>Product Inventory Dashboard</h1>
+        <p>Manage your products, track stock, and stay on top of inventory</p>
+    </header>
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner-box">
+             <div class="spinner"></div>
+            <p>Loading products...</p>
+        </div>
+    </div>
+
+    <main class="dashboard-container">
+
+        <!-- Controls -->
+         <section class="controls-section">
+             <h2 class="section-title">Search & Filter</h2>
+            <div class="controls-wrapper">
+
+                <!-- Search by name -->
+                <div class="control-group">
+                    <label for="search-input">Search Products</label>
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="Type a product name..."
+                        autocomplete="off"
+                    >
+                </div>
+
+                <!-- Category dropdown -->
+                <div class="control-group">
+                    <label for="category-filter">Category</label>
+                    <select id="category-filter">
+                           <option value="all">All Categories</option>
+                         <option value="electronics">Electronics</option>
+                        <option value="clothing">Clothing</option>
+                        <option value="books">Books</option>
+                        <option value="accessories">Accessories</option>
+                    </select>
+                </div>
+
+                <!-- Sort dropdown -->
+                <div class="control-group">
+                    <label for="sort-select">Sort By</label>
+                    <select id="sort-select">
+                        <option value="default">Default</option>
+                        <option value="price-low-high">Price: Low to High</option>
+                        <option value="price-high-low">Price: High to Low</option>
+                        <option value="name-az">Name: A → Z</option>
+                        <option value="name-za">Name: Z → A</option>
+                    </select>
+                </div>
+
+                <!-- Low stock toggle -->
+                <div class="control-group checkbox-group">
+                    <label for="low-stock-toggle">
+                        <input type="checkbox" id="low-stock-toggle">
+                        Show Low Stock Only (less than 5)
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics cards -->
+        <section class="analytics-section">
+            <h2 class="section-title">Inventory Analytics</h2>
+            <div class="analytics-cards">
+                <div class="analytics-card">
+                    <span class="analytics-label">Total Products</span>
+                    <span class="analytics-value" id="total-products">0</span>
+                 </div>
+                 <div class="analytics-card">
+                    <span class="analytics-label">Total Inventory Value</span>
+                                 <span class="analytics-value" id="total-value">₹0</span>
+                </div>
+                <div class="analytics-card">
+                               <span class="analytics-label">Out of Stock</span>
+                      <span class="analytics-value" id="out-of-stock">0</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Product grid -->
+        <section class="product-section">
+            <h2 class="section-title">Product Inventory</h2>
+
+            <!-- Pagination info -->
+            <div class="pagination-bar" id="pagination-bar">
+                <span id="page-info"></span>
+                <div class="pagination-buttons">
+                       <button id="prev-page-btn" disabled>← Prev</button>
+                    <span id="page-numbers"></span>
+                         <button id="next-page-btn">Next →</button>
+                </div>
+            </div>
+
+            <div class="product-grid" id="product-grid">
+                
+            </div>
+
+            
+            <div class="pagination-bar" id="pagination-bar-bottom">
+                <span id="page-info-bottom"></span>
+                <div class="pagination-buttons">
+                        <button id="prev-page-btn-bottom" disabled>← Prev</button>
+                    <span id="page-numbers-bottom"></span>
+                    <button id="next-page-btn-bottom">Next →</button>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="add-product-section">
+            <h2 class="section-title">Add New Product</h2>
+            <form id="add-product-form" novalidate>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="product-name">Product Name</label>
+                        <input type="text" id="product-name" placeholder="e.g. Wireless Mouse" required>
+                        <span class="error-msg" id="name-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="product-price">Price (₹)</label>
+                        <input type="number" id="product-price" placeholder="e.g. 1500" min="1" required>
+                        <span class="error-msg" id="price-error"></span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="product-stock">Stock Quantity</label>
+                        <input type="number" id="product-stock" placeholder="e.g. 25" min="0" required>
+                        <span class="error-msg" id="stock-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="product-category">Category</label>
+                        <select id="product-category" required>
+                            <option value="">-- Select Category --</option>
+                            <option value="electronics">Electronics</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="books">Books</option>
+                            <option value="accessories">Accessories</option>
+                        </select>
+                        <span class="error-msg" id="category-error"></span>
+                    </div>
+                </div>
+                <button type="submit" class="btn-add">Add Product</button>
+            </form>
+        </section>
+
+    </main>
+
+    
+   
+
+    <script src="js/script.js"></script>
+</body>
+</html>
