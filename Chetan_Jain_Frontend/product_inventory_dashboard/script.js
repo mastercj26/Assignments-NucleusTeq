@@ -19,7 +19,7 @@ var PRODUCTS_PER_PAGE = 6;
 
 
 var products = [];         
-var filteredProducts = [];  t
+var filteredProducts = [];  
 var currentPage = 1;        
 
 
@@ -516,7 +516,10 @@ function enableControls() {
 
 function initApp() {
     // Show loading state
-    loadingOverlay.classList.remove("hidden");
+    
+setTimeout(function () {
+    loadingOverlay.classList.add("hidden");
+}, 50);
     disableControls();
 
     // Fetch products 

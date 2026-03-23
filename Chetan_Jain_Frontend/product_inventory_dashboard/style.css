@@ -1,5 +1,4 @@
-/* ===== Global Reset & Base Styles ===== */
-/* I like to reset margins and use border-box so sizing is predictable */
+
 *,
 *::before,
 *::after {
@@ -34,7 +33,6 @@ body {
     min-height: 100vh;
 }
 
-/* ===== Header ===== */
 .main-header {
     background: linear-gradient(135deg, var(--primary), var(--primary-light));
     color: white;
@@ -54,8 +52,7 @@ body {
     opacity: 0.85;
 }
 
-/* ===== Loading Overlay ===== */
-/* This covers the whole screen while "fetching" data */
+
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -73,13 +70,15 @@ body {
 .loading-overlay.hidden {
     opacity: 0;
     pointer-events: none;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
 }
 
 .spinner-box {
     text-align: center;
 }
 
-/* Simple CSS spinner - no libraries needed */
+
 .spinner {
     width: 48px;
     height: 48px;
@@ -117,7 +116,7 @@ body {
     display: inline-block;
 }
 
-/* ===== Controls Section ===== */
+
 .controls-section {
     background: var(--card-bg);
     padding: 1.5rem;
@@ -161,7 +160,7 @@ body {
     border-color: var(--accent);
 }
 
-/* Checkbox group needs a bit different alignment */
+
 .checkbox-group {
     flex-direction: row;
     align-items: center;
@@ -184,7 +183,7 @@ body {
     accent-color: var(--accent);
 }
 
-/* ===== Analytics Section ===== */
+
 .analytics-section {
     margin-bottom: 1.5rem;
 }
@@ -233,7 +232,7 @@ body {
     color: var(--text-dark);
 }
 
-/* ===== Product Grid ===== */
+
 .product-section {
     margin-bottom: 1.5rem;
 }
@@ -245,7 +244,7 @@ body {
     min-height: 120px;
 }
 
-/* Individual product card */
+
 .product-card {
     background: var(--card-bg);
     border-radius: var(--radius);
@@ -264,7 +263,7 @@ body {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
-/* Little colored strip at top of each card based on category */
+
 .product-card::before {
     content: '';
     position: absolute;
@@ -326,7 +325,7 @@ body {
     color: var(--text-light);
 }
 
-/* When stock is low, make it stand out */
+
 .product-card .product-stock.low-stock {
     color: var(--danger);
     font-weight: 600;
@@ -337,7 +336,7 @@ body {
     font-weight: 700;
 }
 
-/* Delete button on each card */
+
 .btn-delete {
     background-color: var(--danger);
     color: white;
@@ -354,7 +353,7 @@ body {
     background-color: var(--danger-hover);
 }
 
-/* Message shown when no products match filters */
+
 .no-products-msg {
     grid-column: 1 / -1;
     text-align: center;
@@ -369,7 +368,7 @@ body {
     margin-bottom: 0.5rem;
 }
 
-/* ===== Pagination ===== */
+
 .pagination-bar {
     display: flex;
     justify-content: space-between;
@@ -423,7 +422,7 @@ body {
     border-color: var(--accent);
 }
 
-/* ===== Add Product Form ===== */
+
 .add-product-section {
     background: var(--card-bg);
     padding: 1.5rem;
@@ -467,7 +466,7 @@ body {
     border-color: var(--accent);
 }
 
-/* Highlight invalid fields */
+
 .form-group input.invalid,
 .form-group select.invalid {
     border-color: var(--danger);
@@ -496,7 +495,7 @@ body {
     background: var(--accent-hover);
 }
 
-/* ===== Footer ===== */
+
 .main-footer {
     text-align: center;
     padding: 1.5rem;
@@ -505,8 +504,7 @@ body {
     border-top: 1px solid var(--border);
 }
 
-/* ===== Responsive Tweaks ===== */
-/* On smaller screens, stack things vertically */
+
 @media (max-width: 768px) {
     .main-header h1 {
         font-size: 1.5rem;
