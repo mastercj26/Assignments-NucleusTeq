@@ -1,4 +1,4 @@
-package Chetan_jain_java_training.session1;
+package Chetan_jain_java_training.session1.basic;
 
 
 import java.util.Scanner;
