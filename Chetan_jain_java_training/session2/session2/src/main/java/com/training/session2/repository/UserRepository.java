@@ -1,4 +1,4 @@
-package com.training.session2.repository;
+package Chetan_jain_java_training.session2.session2.src.main.java.com.training.session2.repository;
 
 import com.training.session2.model.User;
 import org.springframework.stereotype.Repository;

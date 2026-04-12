@@ -1,4 +1,4 @@
-package com.training.session2;
+package Chetan_jain_java_training.session2.session2.src.main.java.com.training.session2;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
