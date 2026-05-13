@@ -1,6 +1,6 @@
-package com.rental.vehicle_rental.config;
+package com.rental.config;
 
-import com.rental.vehicle_rental.security.JwtAuthFilter;
+import com.rental.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

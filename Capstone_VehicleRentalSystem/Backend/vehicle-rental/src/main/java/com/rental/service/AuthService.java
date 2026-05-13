@@ -1,7 +1,7 @@
-package com.rental.vehicle_rental.service;
+package com.rental.service;
 
 import com.rental.dto.*;
-import com.rental.model.user;
+import com.rental.model.User;
 import com.rental.repository.UserRepository;
 import com.rental.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final userRepository     userRepository;
+    private final UserRepository     userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtUtil            jwtUtil;
 
@@ -22,7 +22,7 @@ public class AuthService {
         if (userRepository.existsByEmail(req.getEmail()))
             throw new RuntimeException("Email already in use");
 
-        user user = new user();
+        User user = new User();
         user.setUsername(req.getUsername());
         user.setEmail(req.getEmail());
         user.setPassword(passwordEncoder.encode(req.getPassword()));
@@ -38,7 +38,7 @@ public class AuthService {
 
     // ── LOGIN ──
     public AuthResponse login(LoginRequest req) {
-        user user = userRepository.findByEmail(req.getEmail())
+        User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (!passwordEncoder.matches(req.getPassword(), user.getPassword()))
@@ -52,7 +52,7 @@ public class AuthService {
 
     // ── GET CURRENTLY LOGGED IN USER ──
     // Used by BookingService to know who is making the booking
-    public user getCurrentUser() {
+    public User getCurrentUser() {
         String email = SecurityContextHolder
                 .getContext()
                 .getAuthentication()

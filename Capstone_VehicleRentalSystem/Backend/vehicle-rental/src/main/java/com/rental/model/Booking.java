@@ -19,12 +19,12 @@ public class Booking {
     // Relationship: Many bookings belong to one User
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private user user;
+    private User user;
 
     // Relationship: Many bookings belong to one Vehicle
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vehicle_id", nullable = false)
-    private vehicle vehicle;
+    private Vehicle vehicle;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;

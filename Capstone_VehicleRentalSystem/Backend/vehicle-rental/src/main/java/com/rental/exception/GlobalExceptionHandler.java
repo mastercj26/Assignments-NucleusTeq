@@ -1,4 +1,4 @@
-package com.rental.vehicle_rental.exception;
+package com.rental.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
