@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - Vehicle Rental System</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="auth-page">
+ 
+  <!-- White card in center of screen -->
+  <div class="auth-card">
+ 
+    <!-- Logo at top -->
+    <div class="auth-logo">
+      <div class="logo-circle">🚗</div>
+      <h1>Vehicle Rental</h1>
+      <p>Welcome back! Please login.</p>
+    </div>
+ 
+    <!-- Shows error in red or success in green -->
+    <div id="message" class="message hidden"></div>
+ 
+    <!-- Login Form -->
+    <form id="loginForm">
+ 
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="email" placeholder="Enter your email" />
+        <small class="error-text" id="emailError"></small>
+      </div>
+ 
+      <div class="form-group">
+        <label>Password</label>
+        <div class="password-wrap">
+          <input type="password" id="password" placeholder="Enter your password" />
+          <span class="eye-btn" onclick="togglePassword('password')">👁</span>
+        </div>
+        <small class="error-text" id="passwordError"></small>
+      </div>
+ 
+      <button type="submit" class="btn-primary" id="loginBtn">Login</button>
+ 
+      <p class="switch-link">
+        Don't have an account? <a href="register.html">Register here</a>
+      </p>
+ 
+    </form>
+  </div>
+ 
+  <!-- Load helper functions first -->
+  <script src="js/auth.js"></script>
+ 
+  <script>
+    // If already logged in, go to dashboard directly
+    if (getToken()) {
+      redirectByRole();
+    }
+ 
+    // When user submits the login form
+    document.getElementById("loginForm").addEventListener("submit", async function(e) {
+      e.preventDefault(); // stop page from refreshing
+ 
+      clearErrors(); // clear any old red text
+ 
+      // Read what user typed
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+ 
+      // Validate before sending
+      let hasError = false;
+ 
+      if (!email) {
+        showFieldError("emailError", "Please enter your email");
+        hasError = true;
+      } else if (!isValidEmail(email)) {
+        showFieldError("emailError", "Enter a valid email like abc@gmail.com");
+        hasError = true;
+      }
+ 
+      if (!password) {
+        showFieldError("passwordError", "Please enter your password");
+        hasError = true;
+      }
+ 
+      if (hasError) return; // stop if errors found
+ 
+      // Disable button while waiting for response
+      setLoading("loginBtn", true, "Logging in...");
+ 
+      try {
+        // Call the Spring Boot login API
+        const response = await fetch("http://localhost:8080/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+ 
+        const data = await response.json();
+ 
+        if (response.ok) {
+          // Save token and user info in browser storage
+          saveUser(data.token, data.role, data.username);
+          showMessage("Login successful! Redirecting...", "success");
+ 
+          // Go to the right page based on role
+          setTimeout(() => redirectByRole(), 1000);
+ 
+        } else {
+          showMessage(data.message || "Wrong email or password", "error");
+        }
+ 
+      } catch (err) {
+        showMessage("Server not reachable. Make sure backend is running on port 8080.", "error");
+      }
+ 
+      setLoading("loginBtn", false, "Login");
+    });
+  </script>
+ 
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Bookings - Vehicle Rental System</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+ 
+  <nav class="navbar">
+    <div class="navbar-brand">🚗 Vehicle Rental</div>
+    <div class="navbar-right">
+      <div class="navbar-user">Hello, <span id="navUsername"></span></div>
+      <a href="dashboard.html" class="btn-outline"
+         style="color:white;border-color:white;">Browse Vehicles</a>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+ 
+  <div class="page-content">
+    <h2 class="page-title">My Bookings</h2>
+ 
+    <div id="message" class="message hidden"></div>
+ 
+    <!-- Bookings table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Vehicle</th>
+            <th>Type</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Total Price</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="bookingsBody">
+          <tr><td colspan="8" class="loading">Loading your bookings...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+ 
+  <script src="js/auth.js"></script>
+  <script>
+ 
+    requireLogin();
+    document.getElementById("navUsername").textContent = getUsername();
+ 
+    // ── Load all bookings of logged-in user ──
+    async function loadMyBookings() {
+      try {
+        const response = await apiCall("/api/bookings/my");
+        const bookings = await response.json();
+ 
+        const tbody = document.getElementById("bookingsBody");
+ 
+        if (bookings.length === 0) {
+          tbody.innerHTML =
+            `<tr><td colspan="8">
+               <div class="empty-state">
+                 <div class="empty-icon">📋</div>
+                 <p>You have no bookings yet. <a href="dashboard.html">Browse vehicles</a></p>
+               </div>
+             </td></tr>`;
+          return;
+        }
+ 
+        // Build one table row per booking
+        tbody.innerHTML = bookings.map((b, index) => {
+          const statusBadge = b.status === "CONFIRMED"
+            ? '<span class="badge badge-confirmed">Confirmed</span>'
+            : '<span class="badge badge-cancelled">Cancelled</span>';
+ 
+          // Only show cancel button if booking is confirmed
+          const cancelBtn = b.status === "CONFIRMED"
+            ? `<button class="btn-danger" onclick="cancelBooking(${b.id})">Cancel</button>`
+            : `<span style="color:#94a3b8;font-size:13px;">—</span>`;
+ 
+          return `
+            <tr>
+              <td>${index + 1}</td>
+              <td><strong>${b.vehicle.name}</strong></td>
+              <td><span class="badge badge-${b.vehicle.type.toLowerCase()}">${b.vehicle.type}</span></td>
+              <td>${b.startDate}</td>
+              <td>${b.endDate}</td>
+              <td><strong>₹${b.totalPrice}</strong></td>
+              <td>${statusBadge}</td>
+              <td>${cancelBtn}</td>
+            </tr>`;
+        }).join("");
+ 
+      } catch (err) {
+        showMessage("Could not load bookings. Try again.", "error");
+      }
+    }
+ 
+    // ── Cancel a booking ──
+    async function cancelBooking(bookingId) {
+      const confirmed = confirm("Are you sure you want to cancel this booking?");
+      if (!confirmed) return;
+ 
+      try {
+        const response = await apiCall("/api/bookings/" + bookingId + "/cancel", "DELETE");
+ 
+        if (response.ok) {
+          showMessage("Booking cancelled successfully.", "success");
+          loadMyBookings(); // refresh the table
+        } else {
+          showMessage("Could not cancel booking. Try again.", "error");
+        }
+      } catch (err) {
+        showMessage("Server error. Try again.", "error");
+      }
+    }
+ 
+    loadMyBookings();
+ 
+  </script>
+ 
+</body>
+</html>
+ 

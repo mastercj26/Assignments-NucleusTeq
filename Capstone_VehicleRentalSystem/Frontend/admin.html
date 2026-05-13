@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel - Vehicle Rental System</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+ 
+  <nav class="navbar">
+    <div class="navbar-brand">🚗 Vehicle Rental — Admin</div>
+    <div class="navbar-right">
+      <div class="navbar-user">Admin: <span id="navUsername"></span></div>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+ 
+  <div class="page-content">
+ 
+    <!-- Tab buttons to switch between sections -->
+    <div style="display:flex;gap:12px;margin-bottom:24px;">
+      <button class="btn-primary" id="tabVehicles"
+        style="width:auto;padding:10px 24px;"
+        onclick="showTab('vehicles')">
+        Manage Vehicles
+      </button>
+      <button class="btn-outline" id="tabBookings"
+        onclick="showTab('bookings')">
+        All Bookings
+      </button>
+    </div>
+ 
+    <div id="message" class="message hidden"></div>
+ 
+ 
+    <!-- ── VEHICLES SECTION ── -->
+    <div id="sectionVehicles">
+ 
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h2 class="page-title" style="margin:0;">All Vehicles</h2>
+        <button class="btn-primary" style="width:auto;padding:10px 20px;"
+          onclick="openAddModal()">+ Add Vehicle</button>
+      </div>
+ 
+      <div id="vehiclesGrid" class="vehicles-grid">
+        <div class="loading">Loading vehicles...</div>
+      </div>
+    </div>
+ 
+ 
+    <!-- ── BOOKINGS SECTION ── -->
+    <div id="sectionBookings" style="display:none;">
+      <h2 class="page-title">All Bookings</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>User</th>
+              <th>Vehicle</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Price</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsBody">
+            <tr><td colspan="7" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+ 
+  </div>
+ 
+ 
+  <!-- Add / Edit Vehicle Modal -->
+  <div class="modal-overlay" id="vehicleModal">
+    <div class="modal">
+      <h2 id="modalTitle">Add Vehicle</h2>
+ 
+      <div id="modalMessage" class="message hidden"></div>
+ 
+      <div class="form-group">
+        <label>Vehicle Name</label>
+        <input type="text" id="vName" placeholder="e.g. Honda City" />
+        <small class="error-text" id="vNameError"></small>
+      </div>
+ 
+      <div class="form-group">
+        <label>Type</label>
+        <select id="vType" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
+          <option value="CAR">Car</option>
+          <option value="BIKE">Bike</option>
+        </select>
+      </div>
+ 
+      <div class="form-group">
+        <label>Description</label>
+        <input type="text" id="vDesc" placeholder="Short description" />
+      </div>
+ 
+      <div class="form-group">
+        <label>Price per Day (₹)</label>
+        <input type="number" id="vPrice" placeholder="e.g. 1500" min="0" />
+        <small class="error-text" id="vPriceError"></small>
+      </div>
+ 
+      <div class="form-group">
+        <label>Available?</label>
+        <select id="vAvail" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+ 
+      <div class="modal-actions">
+        <button class="btn-outline" onclick="closeVehicleModal()">Cancel</button>
+        <button class="btn-primary" id="saveVehicleBtn"
+          style="width:auto;padding:10px 24px;"
+          onclick="saveVehicle()">
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+ 
+ 
+  <script src="js/auth.js"></script>
+  <script>
+ 
+    // Only ADMIN can see this page
+    requireAdmin();
+    document.getElementById("navUsername").textContent = getUsername();
+ 
+    let editingVehicleId = null; // null = adding new, number = editing existing
+ 
+    // ── Switch between Vehicles and Bookings tabs ──
+    function showTab(tab) {
+      if (tab === "vehicles") {
+        document.getElementById("sectionVehicles").style.display = "block";
+        document.getElementById("sectionBookings").style.display = "none";
+        document.getElementById("tabVehicles").className = "btn-primary";
+        document.getElementById("tabBookings").className = "btn-outline";
+        loadVehicles();
+      } else {
+        document.getElementById("sectionVehicles").style.display = "none";
+        document.getElementById("sectionBookings").style.display = "block";
+        document.getElementById("tabVehicles").className = "btn-outline";
+        document.getElementById("tabBookings").className = "btn-primary";
+        loadAllBookings();
+      }
+    }
+ 
+ 
+    // ── Load all vehicles ──
+    async function loadVehicles() {
+      document.getElementById("vehiclesGrid").innerHTML =
+        '<div class="loading">Loading vehicles...</div>';
+ 
+      try {
+        const response = await apiCall("/api/vehicles");
+        const vehicles = await response.json();
+ 
+        if (vehicles.length === 0) {
+          document.getElementById("vehiclesGrid").innerHTML =
+            '<div class="empty-state"><div class="empty-icon">🚗</div><p>No vehicles yet. Add one!</p></div>';
+          return;
+        }
+ 
+        document.getElementById("vehiclesGrid").innerHTML =
+          vehicles.map(v => buildAdminCard(v)).join("");
+ 
+      } catch (err) {
+        showMessage("Could not load vehicles.", "error");
+      }
+    }
+ 
+    // ── Build admin vehicle card (has Edit + Delete buttons) ──
+    function buildAdminCard(v) {
+      const icon       = v.type === "CAR" ? "🚗" : "🏍️";
+      const availBadge = v.isAvailable
+        ? '<span class="badge badge-available">Available</span>'
+        : '<span class="badge badge-unavailable">Unavailable</span>';
+ 
+      return `
+        <div class="vehicle-card">
+          <div class="vehicle-card-icon">${icon}</div>
+          <h3>${v.name}</h3>
+          <p>${v.description || "No description"}</p>
+          <div class="vehicle-card-meta">
+            <span class="vehicle-price">₹${v.pricePerDay}/day</span>
+            <span class="badge badge-${v.type.toLowerCase()}">${v.type}</span>
+          </div>
+          ${availBadge}
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <button class="btn-outline" style="flex:1;"
+              onclick="openEditModal(${v.id},'${v.name}','${v.type}',
+                '${v.description||""}',${v.pricePerDay},${v.isAvailable})">
+              ✏️ Edit
+            </button>
+            <button class="btn-danger" style="flex:1;"
+              onclick="deleteVehicle(${v.id}, '${v.name}')">
+              🗑 Delete
+            </button>
+          </div>
+        </div>`;
+    }
+ 
+    // ── Open modal to add a new vehicle ──
+    function openAddModal() {
+      editingVehicleId = null;
+      document.getElementById("modalTitle").textContent = "Add New Vehicle";
+      document.getElementById("vName").value  = "";
+      document.getElementById("vType").value  = "CAR";
+      document.getElementById("vDesc").value  = "";
+      document.getElementById("vPrice").value = "";
+      document.getElementById("vAvail").value = "true";
+      document.getElementById("modalMessage").className = "message hidden";
+      document.getElementById("vehicleModal").classList.add("show");
+    }
+ 
+    // ── Open modal to edit an existing vehicle ──
+    function openEditModal(id, name, type, desc, price, avail) {
+      editingVehicleId = id;
+      document.getElementById("modalTitle").textContent = "Edit Vehicle";
+      document.getElementById("vName").value  = name;
+      document.getElementById("vType").value  = type;
+      document.getElementById("vDesc").value  = desc;
+      document.getElementById("vPrice").value = price;
+      document.getElementById("vAvail").value = String(avail);
+      document.getElementById("modalMessage").className = "message hidden";
+      document.getElementById("vehicleModal").classList.add("show");
+    }
+ 
+    function closeVehicleModal() {
+      document.getElementById("vehicleModal").classList.remove("show");
+      editingVehicleId = null;
+    }
+ 
+    // ── Save vehicle (add or edit) ──
+    async function saveVehicle() {
+      const name  = document.getElementById("vName").value.trim();
+      const type  = document.getElementById("vType").value;
+      const desc  = document.getElementById("vDesc").value.trim();
+      const price = document.getElementById("vPrice").value;
+      const avail = document.getElementById("vAvail").value === "true";
+ 
+      // Basic validation
+      if (!name) {
+        showModalMsg("Please enter a vehicle name", "error"); return;
+      }
+      if (!price || price <= 0) {
+        showModalMsg("Please enter a valid price", "error"); return;
+      }
+ 
+      setLoading("saveVehicleBtn", true, "Saving...");
+ 
+      const body = { name, type, description: desc, pricePerDay: price, isAvailable: avail };
+ 
+      try {
+        let response;
+ 
+        if (editingVehicleId) {
+          // Edit existing — PUT request
+          response = await apiCall("/api/vehicles/" + editingVehicleId, "PUT", body);
+        } else {
+          // Add new — POST request
+          response = await apiCall("/api/vehicles", "POST", body);
+        }
+ 
+        if (response.ok) {
+          showModalMsg(editingVehicleId ? "Vehicle updated!" : "Vehicle added!", "success");
+          setTimeout(() => {
+            closeVehicleModal();
+            loadVehicles(); // refresh the grid
+          }, 1000);
+        } else {
+          const data = await response.json();
+          showModalMsg(data.message || "Failed to save vehicle", "error");
+        }
+ 
+      } catch (err) {
+        showModalMsg("Server error. Try again.", "error");
+      }
+ 
+      setLoading("saveVehicleBtn", false, "Save");
+    }
+ 
+    // ── Delete a vehicle ──
+    async function deleteVehicle(id, name) {
+      const confirmed = confirm("Delete vehicle: " + name + "? This cannot be undone.");
+      if (!confirmed) return;
+ 
+      try {
+        const response = await apiCall("/api/vehicles/" + id, "DELETE");
+ 
+        if (response.ok) {
+          showMessage("Vehicle deleted successfully.", "success");
+          loadVehicles();
+        } else {
+          showMessage("Could not delete vehicle.", "error");
+        }
+      } catch (err) {
+        showMessage("Server error.", "error");
+      }
+    }
+ 
+    // ── Load all bookings (admin view) ──
+    async function loadAllBookings() {
+      try {
+        const response = await apiCall("/api/bookings");
+        const bookings = await response.json();
+        const tbody    = document.getElementById("bookingsBody");
+ 
+        if (bookings.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="7"><div class="empty-state"><p>No bookings yet</p></div></td></tr>';
+          return;
+        }
+ 
+        tbody.innerHTML = bookings.map((b, i) => {
+          const badge = b.status === "CONFIRMED"
+            ? '<span class="badge badge-confirmed">Confirmed</span>'
+            : '<span class="badge badge-cancelled">Cancelled</span>';
+ 
+          return `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${b.user.username}</td>
+              <td>${b.vehicle.name}</td>
+              <td>${b.startDate}</td>
+              <td>${b.endDate}</td>
+              <td><strong>₹${b.totalPrice}</strong></td>
+              <td>${badge}</td>
+            </tr>`;
+        }).join("");
+ 
+      } catch (err) {
+        showMessage("Could not load bookings.", "error");
+      }
+    }
+ 
+    function showModalMsg(text, type) {
+      const box = document.getElementById("modalMessage");
+      box.textContent = text;
+      box.className   = "message " + type;
+    }
+ 
+    // Load vehicles when page opens
+    loadVehicles();
+ 
+  </script>
+ 
+</body>
+</html>
+ 

@@ -1,0 +1,514 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+ 
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 15px;
+  color: #1e293b;
+  background: #f1f5f9;
+}
+ 
+ 
+/* ── AUTH PAGES (login & register) ───────────────────────────── */
+ 
+/* Dark blue gradient background for login/register pages */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+}
+ 
+/* The white card in the center */
+.auth-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+ 
+/* Logo section at top of card */
+.auth-logo {
+  text-align: center;
+  margin-bottom: 28px;
+}
+ 
+/* Circle behind the car emoji */
+.logo-circle {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 12px;
+}
+ 
+.auth-logo h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+}
+ 
+.auth-logo p {
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 4px;
+}
+ 
+ 
+/* ── FORM ELEMENTS ────────────────────────────────────────────── */
+ 
+/* Space between each input group */
+.form-group {
+  margin-bottom: 18px;
+}
+ 
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+ 
+/* All text inputs */
+.form-group input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  transition: border-color 0.2s;
+  outline: none;
+  background: #f8fafc;
+}
+ 
+/* Blue border when user clicks on input */
+.form-group input:focus {
+  border-color: #3b82f6;
+  background: #ffffff;
+}
+ 
+/* Wrapper for password + eye icon */
+.password-wrap {
+  position: relative;
+}
+ 
+.password-wrap input {
+  padding-right: 42px; /* make space for eye icon */
+}
+ 
+/* The eye icon button */
+.eye-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+}
+ 
+/* Small red error text under inputs */
+.error-text {
+  display: none;
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 4px;
+}
+ 
+ 
+/* ── BUTTONS ──────────────────────────────────────────────────── */
+ 
+/* Main blue button */
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: opacity 0.2s, transform 0.1s;
+}
+ 
+.btn-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+ 
+.btn-primary:active {
+  transform: translateY(0);
+}
+ 
+/* Red danger button (for delete/cancel actions) */
+.btn-danger {
+  padding: 7px 14px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+ 
+.btn-danger:hover { opacity: 0.85; }
+ 
+/* Outline button (for secondary actions) */
+.btn-outline {
+  padding: 7px 14px;
+  background: transparent;
+  color: #3b82f6;
+  border: 1.5px solid #3b82f6;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+ 
+.btn-outline:hover {
+  background: #3b82f6;
+  color: white;
+}
+ 
+/* Link to switch between login and register */
+.switch-link {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 13px;
+  color: #64748b;
+}
+ 
+.switch-link a {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+}
+ 
+.switch-link a:hover {
+  text-decoration: underline;
+}
+ 
+ 
+/* ── MESSAGE BOX (success / error) ───────────────────────────── */
+ 
+.message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+ 
+/* Green success box */
+.message.success {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+ 
+/* Red error box */
+.message.error {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+ 
+/* Hide by default */
+.message.hidden,
+.hidden {
+  display: none;
+}
+ 
+ 
+/* ── NAVBAR ───────────────────────────────────────────────────── */
+ 
+.navbar {
+  background: #0f172a;
+  color: white;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+ 
+.navbar-brand {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+ 
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+ 
+.navbar-user {
+  font-size: 14px;
+  color: #94a3b8;
+}
+ 
+.navbar-user span {
+  color: #38bdf8;
+  font-weight: 600;
+}
+ 
+.btn-logout {
+  padding: 7px 16px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+}
+ 
+.btn-logout:hover { opacity: 0.85; }
+ 
+ 
+/* ── MAIN PAGE LAYOUT ─────────────────────────────────────────── */
+ 
+.page-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px;
+}
+ 
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 20px;
+}
+ 
+ 
+/* ── VEHICLE CARDS GRID ───────────────────────────────────────── */
+ 
+.vehicles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+ 
+/* Individual vehicle card */
+.vehicle-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  border: 1px solid #e2e8f0;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+ 
+.vehicle-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+ 
+.vehicle-card-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+ 
+.vehicle-card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+ 
+.vehicle-card p {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+ 
+.vehicle-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+ 
+.vehicle-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e40af;
+}
+ 
+/* Green or red availability badge */
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+ 
+.badge-available {
+  background: #dcfce7;
+  color: #15803d;
+}
+ 
+.badge-unavailable {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+ 
+.badge-car  { background: #dbeafe; color: #1e40af; }
+.badge-bike { background: #fef3c7; color: #b45309; }
+ 
+.badge-confirmed  { background: #dcfce7; color: #15803d; }
+.badge-cancelled  { background: #fee2e2; color: #b91c1c; }
+ 
+ 
+/* ── FILTER BAR ───────────────────────────────────────────────── */
+ 
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+ 
+.filter-bar select,
+.filter-bar input {
+  padding: 9px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  color: #1e293b;
+  outline: none;
+}
+ 
+.filter-bar select:focus,
+.filter-bar input:focus {
+  border-color: #3b82f6;
+}
+ 
+ 
+/* ── TABLE (for admin bookings list) ─────────────────────────── */
+ 
+.table-wrap {
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+ 
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+ 
+thead {
+  background: #0f172a;
+  color: white;
+}
+ 
+th {
+  padding: 13px 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+}
+ 
+td {
+  padding: 12px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+ 
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8fafc; }
+ 
+ 
+/* ── MODAL (popup for booking form) ──────────────────────────── */
+ 
+/* Dark overlay behind modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+ 
+.modal-overlay.show {
+  display: flex;
+}
+ 
+/* The white modal box */
+.modal {
+  background: white;
+  border-radius: 14px;
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+ 
+.modal h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #0f172a;
+}
+ 
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+ 
+ 
+/* ── LOADING SPINNER ──────────────────────────────────────────── */
+ 
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 15px;
+  color: #64748b;
+}
+ 
+/* Empty state message */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+  font-size: 15px;
+}
+ 
+.empty-state .empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
