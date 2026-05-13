@@ -1,22 +1,23 @@
-package com.rental.service;
+package com.rental.vehicle_rental.service;
 
 import com.rental.dto.*;
 import com.rental.model.user;
 import com.rental.repository.UserRepository;
 import com.rental.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class Authservice {
+public class AuthService {
 
-    private final UserRepository userRepository;
+    private final userRepository     userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+    private final JwtUtil            jwtUtil;
 
-    // REGISTER
+    // ── REGISTER ──
     public AuthResponse register(RegisterRequest req) {
         if (userRepository.existsByEmail(req.getEmail()))
             throw new RuntimeException("Email already in use");
@@ -24,16 +25,18 @@ public class Authservice {
         user user = new user();
         user.setUsername(req.getUsername());
         user.setEmail(req.getEmail());
-        user.setPassword(passwordEncoder.encode(req.getPassword())); // BCrypt here
-        user.setRole(user.Role.USER); // default role
+        user.setPassword(passwordEncoder.encode(req.getPassword()));
+        user.setRole(User.Role.USER); // default role is always USER
 
-        userRepository.save(user);
+        userRepository.save(user); // saves to PostgreSQL
 
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-        return new AuthResponse(token, user.getRole().name(), user.getUsername());
+        String token = jwtUtil.generateToken(
+                user.getEmail(), user.getRole().name());
+        return new AuthResponse(
+                token, user.getRole().name(), user.getUsername());
     }
 
-    // LOGIN
+    // ── LOGIN ──
     public AuthResponse login(LoginRequest req) {
         user user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -41,7 +44,21 @@ public class Authservice {
         if (!passwordEncoder.matches(req.getPassword(), user.getPassword()))
             throw new RuntimeException("Invalid password");
 
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-        return new AuthResponse(token, user.getRole().name(), user.getUsername());
+        String token = jwtUtil.generateToken(
+                user.getEmail(), user.getRole().name());
+        return new AuthResponse(
+                token, user.getRole().name(), user.getUsername());
+    }
+
+    // ── GET CURRENTLY LOGGED IN USER ──
+    // Used by BookingService to know who is making the booking
+    public user getCurrentUser() {
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName(); // this is the email we stored in JWT subject
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }
