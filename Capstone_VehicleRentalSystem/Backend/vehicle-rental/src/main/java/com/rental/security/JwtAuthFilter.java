@@ -1,4 +1,4 @@
-package com.rental.vehicle_rental.security;
+package com.rental.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

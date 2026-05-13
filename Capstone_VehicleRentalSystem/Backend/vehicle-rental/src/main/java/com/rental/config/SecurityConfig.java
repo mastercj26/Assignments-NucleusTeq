@@ -1,9 +1,10 @@
-package com.rental.vehicle_rental.config;
+package com.rental.config;
 
-import com.rental.vehicle_rental.security.JwtAuthFilter;
+import com.rental.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -13,6 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -35,8 +37,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
 
                         // ── ADMIN only endpoints ──
-                        .requestMatchers("/api/vehicles").hasRole("ADMIN")
-                        .requestMatchers("/api/vehicles/**").hasRole("ADMIN")
+                        .requestMatchers("/api/vehicles").authenticated()
+                        .requestMatchers("/api/vehicles/**").authenticated()
                         .requestMatchers("/api/bookings").hasRole("ADMIN")
 
                         // ── USER + ADMIN endpoints ──

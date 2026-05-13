@@ -1,11 +1,11 @@
 package com.rental.repository;
 
-import com.rental.model.user;
+import com.rental.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<user, Long> {
-    Optional<user> findByEmail(String email);
-    Optional<user> findByUsername(String username);
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByEmail(String email);
+    Optional<User> findByUsername(String username);
     Boolean existsByEmail(String email);
 }
