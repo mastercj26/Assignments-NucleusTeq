@@ -1,5 +1,6 @@
 package com.rental.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -32,7 +33,12 @@ public class Vehicle {
     @Column(name = "is_available", nullable = false)
     private Boolean isAvailable = true;
 
+    @ManyToOne
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Booking> bookings;
 
     public enum VehicleType { CAR, BIKE }

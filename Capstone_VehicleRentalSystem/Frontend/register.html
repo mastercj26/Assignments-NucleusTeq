@@ -4,87 +4,82 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Register - Vehicle Rental System</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body class="auth-page">
- 
-  <!-- White card in center -->
   <div class="auth-card">
- 
     <div class="auth-logo">
-      <div class="logo-circle">🚗</div>
+      <div class="logo-circle">VR</div>
       <h1>Create Account</h1>
-      <p>Join us and start renting vehicles!</p>
+      <p>Join and start renting vehicles.</p>
     </div>
- 
-    <!-- Error or success message box -->
+
     <div id="message" class="message hidden"></div>
- 
-    <!-- Register Form -->
+
     <form id="registerForm">
- 
       <div class="form-group">
         <label>Full Name</label>
         <input type="text" id="username" placeholder="Enter your full name" />
         <small class="error-text" id="usernameError"></small>
       </div>
- 
+
       <div class="form-group">
         <label>Email Address</label>
         <input type="email" id="email" placeholder="Enter your email" />
         <small class="error-text" id="emailError"></small>
       </div>
- 
+
       <div class="form-group">
         <label>Password</label>
         <div class="password-wrap">
           <input type="password" id="password" placeholder="Minimum 6 characters" />
-          <span class="eye-btn" onclick="togglePassword('password')">👁</span>
+          <button type="button" class="eye-btn" onclick="togglePassword('password')">Show</button>
         </div>
         <small class="error-text" id="passwordError"></small>
       </div>
- 
+
       <div class="form-group">
         <label>Confirm Password</label>
         <div class="password-wrap">
           <input type="password" id="confirmPassword" placeholder="Repeat your password" />
-          <span class="eye-btn" onclick="togglePassword('confirmPassword')">👁</span>
+          <button type="button" class="eye-btn" onclick="togglePassword('confirmPassword')">Show</button>
         </div>
         <small class="error-text" id="confirmPasswordError"></small>
       </div>
- 
+
+      <div class="form-group">
+        <label>Role</label>
+        <select id="role">
+          <option value="USER" selected>User</option>
+          <option value="VEHICLE_OWNER">Vehicle Owner</option>
+        </select>
+      </div>
+
       <button type="submit" class="btn-primary" id="registerBtn">Create Account</button>
- 
+
       <p class="switch-link">
         Already have an account? <a href="login.html">Login here</a>
       </p>
- 
     </form>
   </div>
- 
-  <script src="js/auth.js"></script>
- 
+
+  <script src="Auth.js"></script>
   <script>
-    // If already logged in, no need to register again
     if (getToken()) {
       redirectByRole();
     }
- 
-    // When user submits the register form
+
     document.getElementById("registerForm").addEventListener("submit", async function(e) {
       e.preventDefault();
- 
       clearErrors();
- 
-      // Read all fields
-      const username        = document.getElementById("username").value.trim();
-      const email           = document.getElementById("email").value.trim();
-      const password        = document.getElementById("password").value.trim();
+
+      const username = document.getElementById("username").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
       const confirmPassword = document.getElementById("confirmPassword").value.trim();
- 
-      // Validate each field one by one
+      const role = document.getElementById("role").value;
       let hasError = false;
- 
+
       if (!username) {
         showFieldError("usernameError", "Please enter your name");
         hasError = true;
@@ -92,15 +87,15 @@
         showFieldError("usernameError", "Name must be at least 3 characters");
         hasError = true;
       }
- 
+
       if (!email) {
         showFieldError("emailError", "Please enter your email");
         hasError = true;
       } else if (!isValidEmail(email)) {
-        showFieldError("emailError", "Enter a valid email like abc@gmail.com");
+        showFieldError("emailError", "Enter a valid email address");
         hasError = true;
       }
- 
+
       if (!password) {
         showFieldError("passwordError", "Please enter a password");
         hasError = true;
@@ -108,7 +103,7 @@
         showFieldError("passwordError", "Password must be at least 6 characters");
         hasError = true;
       }
- 
+
       if (!confirmPassword) {
         showFieldError("confirmPasswordError", "Please confirm your password");
         hasError = true;
@@ -116,40 +111,32 @@
         showFieldError("confirmPasswordError", "Passwords do not match");
         hasError = true;
       }
- 
+
       if (hasError) return;
- 
+
       setLoading("registerBtn", true, "Creating account...");
- 
+
       try {
-        // Call the Spring Boot register API
-        const response = await fetch("http://localhost:8080/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, email, password })
+        const { response, data } = await authRequest("/api/auth/register", {
+          username,
+          email,
+          password,
+          role
         });
- 
-        const data = await response.json();
- 
+
         if (response.ok) {
-          // Save token and go to dashboard
           saveUser(data.token, data.role, data.username);
-          showMessage("Account created successfully! Redirecting...", "success");
- 
-          setTimeout(() => redirectByRole(), 1000);
- 
+          showMessage("Account created successfully. Redirecting...", "success");
+          setTimeout(() => redirectByRole(), 700);
         } else {
-          // Show backend error (like email already exists)
           showMessage(data.message || "Registration failed. Try again.", "error");
         }
- 
       } catch (err) {
-        showMessage("Server not reachable. Make sure backend is running on port 8080.", "error");
+        showMessage("Server not reachable. Start the backend on port 8080.", "error");
+      } finally {
+        setLoading("registerBtn", false, "Create Account");
       }
- 
-      setLoading("registerBtn", false, "Create Account");
     });
   </script>
- 
 </body>
 </html>

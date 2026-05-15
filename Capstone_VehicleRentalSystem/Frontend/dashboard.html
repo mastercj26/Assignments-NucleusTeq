@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vehicles - Vehicle Rental System</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-brand">Vehicle Rental</div>
+    <div class="navbar-right">
+      <div class="navbar-user">Hello, <span id="navUsername"></span></div>
+      <a href="mybooking.html" class="btn-outline" style="color:white;border-color:white;">My Bookings</a>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <main class="page-content">
+    <h2 class="page-title">Browse Vehicles</h2>
+
+    <div id="message" class="message hidden"></div>
+
+    <div class="filter-bar">
+      <select id="typeFilter" onchange="loadVehicles()">
+        <option value="">All Types</option>
+        <option value="CAR">Cars</option>
+        <option value="BIKE">Bikes</option>
+      </select>
+
+      <select id="availabilityFilter" onchange="loadVehicles()">
+        <option value="">All Availability</option>
+        <option value="true">Available</option>
+        <option value="false">Unavailable</option>
+      </select>
+
+      <button class="btn-outline" onclick="clearFilters()">Clear Filters</button>
+    </div>
+
+    <div id="vehiclesGrid" class="vehicles-grid">
+      <div class="loading">Loading vehicles...</div>
+    </div>
+  </main>
+
+  <!-- Details Modal -->
+  <div class="modal-overlay" id="detailsModal">
+    <div class="modal">
+      <h2 id="detailsTitle">Vehicle Details</h2>
+      <div id="detailsBody"></div>
+      <div class="modal-actions">
+        <button class="btn-outline" onclick="closeDetails()">Close</button>
+        <button class="btn-primary" id="bookNowBtn" onclick="openBookingModal()">Book Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Booking Modal -->
+  <div class="modal-overlay" id="bookingModal">
+    <div class="modal">
+      <h2>Book Vehicle</h2>
+      <div id="bookingMessage" class="message hidden"></div>
+      
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" id="startDate" />
+      </div>
+
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="date" id="endDate" />
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-outline" onclick="closeBookingModal()">Cancel</button>
+        <button class="btn-primary" id="confirmBookingBtn" onclick="confirmBooking()">Confirm Booking</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="Auth.js"></script>
+  <script>
+    requireLogin();
+    document.getElementById("navUsername").textContent = getUsername();
+
+    let currentVehicles = [];
+    let selectedVehicleId = null;
+
+    async function loadVehicles() {
+      const type = document.getElementById("typeFilter").value;
+      const available = document.getElementById("availabilityFilter").value;
+      const params = new URLSearchParams();
+
+      if (type) params.set("type", type);
+      if (available) params.set("available", available);
+
+      const url = "/api/vehicles" + (params.toString() ? "?" + params.toString() : "");
+      document.getElementById("vehiclesGrid").innerHTML =
+        '<div class="loading">Loading vehicles...</div>';
+
+      try {
+        const response = await apiCall(url);
+        if (!response || !response.ok) {
+          showMessage("Could not load vehicles.", "error");
+          return;
+        }
+
+        currentVehicles = await response.json();
+        renderVehicles();
+      } catch (err) {
+        showMessage("Server error while loading vehicles.", "error");
+      }
+    }
+
+    function renderVehicles() {
+      const grid = document.getElementById("vehiclesGrid");
+
+      if (currentVehicles.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><p>No vehicles match these filters.</p></div>';
+        return;
+      }
+
+      grid.innerHTML = currentVehicles.map(vehicle => {
+        const availBadge = vehicle.isAvailable
+          ? '<span class="badge badge-available">Available</span>'
+          : '<span class="badge badge-unavailable">Unavailable</span>';
+
+        return `
+          <div class="vehicle-card">
+            <div class="vehicle-card-icon">${vehicle.type === "CAR" ? "CAR" : "BIKE"}</div>
+            <h3>${escapeHtml(vehicle.name)}</h3>
+            <p>${escapeHtml(vehicle.description || "No description available")}</p>
+            <div class="vehicle-card-meta">
+              <span class="vehicle-price">Rs. ${vehicle.pricePerDay}/day</span>
+              <span class="badge badge-${vehicle.type.toLowerCase()}">${vehicle.type}</span>
+            </div>
+            ${availBadge}
+            <button class="btn-primary" style="margin-top:14px;"
+              onclick="showDetails(${vehicle.id})">
+              View Details
+            </button>
+          </div>`;
+      }).join("");
+    }
+
+    function showDetails(id) {
+      const vehicle = currentVehicles.find(v => v.id === id);
+      if (!vehicle) return;
+
+      selectedVehicleId = id;
+      document.getElementById("detailsTitle").textContent = vehicle.name;
+      document.getElementById("detailsBody").innerHTML = `
+        <p><strong>Type:</strong> ${vehicle.type}</p>
+        <p><strong>Price per day:</strong> Rs. ${vehicle.pricePerDay}</p>
+        <p><strong>Status:</strong> ${vehicle.isAvailable ? "Available" : "Unavailable"}</p>
+        <p><strong>Description:</strong> ${escapeHtml(vehicle.description || "No description available")}</p>
+      `;
+      
+      const bookBtn = document.getElementById("bookNowBtn");
+      if (!vehicle.isAvailable) {
+        bookBtn.disabled = true;
+        bookBtn.style.opacity = "0.5";
+        bookBtn.textContent = "Not Available";
+      } else {
+        bookBtn.disabled = false;
+        bookBtn.style.opacity = "1";
+        bookBtn.textContent = "Book Now";
+      }
+
+      document.getElementById("detailsModal").classList.add("show");
+    }
+
+    function closeDetails() {
+      document.getElementById("detailsModal").classList.remove("show");
+    }
+
+    function openBookingModal() {
+      closeDetails();
+      document.getElementById("startDate").value = new Date().toISOString().split('T')[0];
+      document.getElementById("endDate").value = "";
+      document.getElementById("bookingMessage").className = "message hidden";
+      document.getElementById("bookingModal").classList.add("show");
+    }
+
+    function closeBookingModal() {
+      document.getElementById("bookingModal").classList.remove("show");
+    }
+
+    async function confirmBooking() {
+      const startDate = document.getElementById("startDate").value;
+      const endDate = document.getElementById("endDate").value;
+
+      if (!startDate || !endDate) {
+        showBookingMsg("Please select both dates", "error");
+        return;
+      }
+
+      setLoading("confirmBookingBtn", true, "Booking...");
+
+      try {
+        const response = await apiCall("/api/bookings", "POST", {
+          vehicleId: selectedVehicleId,
+          startDate,
+          endDate
+        });
+
+        if (response && response.ok) {
+          showBookingMsg("Booking confirmed successfully!", "success");
+          setTimeout(() => {
+            closeBookingModal();
+            window.location.href = "mybooking.html";
+          }, 1500);
+        } else {
+          const data = await response.json();
+          showBookingMsg(data.message || "Failed to create booking. Check for overlapping dates.", "error");
+        }
+      } catch (err) {
+        showBookingMsg("Server error. Try again.", "error");
+      } finally {
+        setLoading("confirmBookingBtn", false, "Confirm Booking");
+      }
+    }
+
+    function showBookingMsg(text, type) {
+      const box = document.getElementById("bookingMessage");
+      box.textContent = text;
+      box.className = "message " + type;
+      box.style.display = "block";
+    }
+
+    function clearFilters() {
+      document.getElementById("typeFilter").value = "";
+      document.getElementById("availabilityFilter").value = "";
+      loadVehicles();
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    loadVehicles();
+  </script>
+</body>
+</html>

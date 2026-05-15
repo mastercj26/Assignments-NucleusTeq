@@ -26,7 +26,13 @@ public class AuthService {
         user.setUsername(req.getUsername());
         user.setEmail(req.getEmail());
         user.setPassword(passwordEncoder.encode(req.getPassword()));
-        user.setRole(User.Role.USER); // default role is always USER
+        
+        // Allow choosing role, default to USER
+        if (req.getRole() != null && req.getRole().equalsIgnoreCase("VEHICLE_OWNER")) {
+            user.setRole(User.Role.VEHICLE_OWNER);
+        } else {
+            user.setRole(User.Role.USER);
+        }
 
         userRepository.save(user); // saves to PostgreSQL
 

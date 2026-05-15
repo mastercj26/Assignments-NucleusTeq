@@ -1,5 +1,6 @@
 package com.rental.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -29,7 +30,8 @@ public class User {
     private Role role = Role.USER;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Booking> bookings;
 
-    public enum Role { USER, ADMIN }
+    public enum Role { USER, VEHICLE_OWNER }
 }

@@ -81,7 +81,8 @@ body {
 }
  
 /* All text inputs */
-.form-group input {
+.form-group input,
+.form-group select {
   width: 100%;
   padding: 11px 14px;
   border: 1.5px solid #e2e8f0;
@@ -94,7 +95,8 @@ body {
 }
  
 /* Blue border when user clicks on input */
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   border-color: #3b82f6;
   background: #ffffff;
 }

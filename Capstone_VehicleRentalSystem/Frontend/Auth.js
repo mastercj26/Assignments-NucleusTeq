@@ -1,169 +1,188 @@
+const API_BASE_URL = "http://localhost:8080";
+
+/**
+ * TOKEN STORAGE LOGIC
+ * Handled via localStorage for persistence across sessions
+ */
+
 function saveUser(token, role, username) {
-  localStorage.setItem("token",    token);
-  localStorage.setItem("role",     role);
+  localStorage.setItem("token", token);
+  localStorage.setItem("role", role);
   localStorage.setItem("username", username);
+  localStorage.setItem("loginTime", Date.now()); // For optional session tracking
 }
- 
-// Get the saved token (returns null if not logged in)
+
 function getToken() {
   return localStorage.getItem("token");
 }
- 
-// Get the saved role (USER or ADMIN)
+
 function getRole() {
   return localStorage.getItem("role");
 }
- 
-// Get the saved username
+
 function getUsername() {
   return localStorage.getItem("username");
 }
- 
-// Remove everything — used when logging out
+
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("role");
   localStorage.removeItem("username");
+  localStorage.removeItem("loginTime");
   window.location.href = "login.html";
 }
- 
- 
-// ── 2. ROUTING / PROTECTION ──────────────────────────────────────
-// These functions control which page the user can access
- 
- 
-// If logged in, send to the right page based on role
+
+/**
+ * ROUTING LOGIC
+ * Centralized navigation and access control
+ */
+
 function redirectByRole() {
   const role = getRole();
-  if (role === "ADMIN") {
+  if (role === "VEHICLE_OWNER") {
     window.location.href = "admin.html";
-  } else {
+  } else if (role === "USER") {
     window.location.href = "dashboard.html";
+  } else {
+    logout();
   }
 }
- 
-// Call this at top of protected pages (dashboard, admin)
-// If user is not logged in, kick them back to login page
+
 function requireLogin() {
   if (!getToken()) {
+    console.warn("Unauthorized access: No token found. Redirecting to login.");
     window.location.href = "login.html";
+    return false;
   }
+  return true;
 }
- 
-// Call this at top of admin-only pages
-// If user is not ADMIN, send them to dashboard
-function requireAdmin() {
-  requireLogin(); // must be logged in first
-  if (getRole() !== "ADMIN") {
+
+function requireVehicleOwner() {
+  if (!requireLogin()) return false;
+  
+  if (getRole() !== "VEHICLE_OWNER") {
+    console.warn("Access denied: Vehicle Owner privileges required.");
     window.location.href = "dashboard.html";
+    return false;
   }
+  return true;
 }
- 
- 
-// ── 3. API HELPER ────────────────────────────────────────────────
-// This function is used to call any protected API endpoint
-// It automatically adds the JWT token to the request header
- 
- 
+
+/**
+ * API UTILITIES
+ * Automatic token attachment and 401/403 handling
+ */
+
 async function apiCall(url, method = "GET", body = null) {
   const token = getToken();
- 
-  // Build the request options
+  
   const options = {
-    method: method,
+    method,
     headers: {
-      "Content-Type":  "application/json",
-      "Authorization": "Bearer " + token   // attach JWT here
+      "Content-Type": "application/json"
     }
   };
- 
-  // Add body only for POST, PUT requests
+
+  if (token) {
+    options.headers["Authorization"] = "Bearer " + token;
+  }
+
   if (body) {
     options.body = JSON.stringify(body);
   }
- 
-  const response = await fetch("http://localhost:8080" + url, options);
- 
-  // If 401 Unauthorized — token expired, send to login
-  if (response.status === 401) {
-    logout();
-    return null;
+
+  try {
+    const response = await fetch(API_BASE_URL + url, options);
+
+    // If token is expired or invalid, logout and redirect
+    if (response.status === 401 || response.status === 403) {
+      console.error("Session expired or unauthorized. Logging out...");
+      logout();
+      return null;
+    }
+
+    return response;
+  } catch (err) {
+    console.error("Network error during API call:", err);
+    throw err;
   }
- 
-  return response;
 }
- 
- 
-// ── 4. VALIDATION HELPERS ────────────────────────────────────────
- 
-// Check if email looks like a real email
+
+async function authRequest(url, body) {
+  try {
+    const response = await fetch(API_BASE_URL + url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+
+    let data = {};
+    try {
+      data = await response.json();
+    } catch (err) {
+      data = {};
+    }
+
+    return { response, data };
+  } catch (err) {
+    console.error("Auth request failed:", err);
+    throw err;
+  }
+}
+
+/**
+ * UI UTILITIES
+ */
+
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
- 
- 
-// ── 5. UI HELPERS ────────────────────────────────────────────────
-// Functions to show messages, errors, and loading state
- 
- 
-// Show a message box (green for success, red for error)
+
 function showMessage(text, type) {
   const box = document.getElementById("message");
   if (!box) return;
- 
-  box.textContent   = text;
-  box.className     = "message " + type; // adds class "success" or "error"
+
+  box.textContent = text;
+  box.className = "message " + type;
   box.style.display = "block";
- 
-  // Auto hide after 4 seconds
+
   setTimeout(() => {
     box.style.display = "none";
   }, 4000);
 }
- 
-// Show red text under a specific input field
+
 function showFieldError(fieldId, text) {
   const el = document.getElementById(fieldId);
-  if (el) {
-    el.textContent = text;
-    el.style.display = "block";
-  }
+  if (!el) return;
+
+  el.textContent = text;
+  el.style.display = "block";
 }
- 
-// Clear all red error texts on the page
+
 function clearErrors() {
   document.querySelectorAll(".error-text").forEach(el => {
     el.textContent = "";
     el.style.display = "none";
   });
+
   const msg = document.getElementById("message");
-  if (msg) msg.style.display = "none";
-}
- 
-// Change button text and disable it while waiting for API
-function setLoading(buttonId, isLoading, loadingText) {
-  const btn = document.getElementById(buttonId);
-  if (!btn) return;
- 
-  if (isLoading) {
-    btn.disabled     = true;
-    btn.textContent  = loadingText;
-    btn.style.opacity = "0.7";
-  } else {
-    btn.disabled      = false;
-    btn.textContent   = loadingText;
-    btn.style.opacity = "1";
+  if (msg) {
+    msg.style.display = "none";
   }
 }
- 
-// Show or hide password when eye icon is clicked
+
+function setLoading(buttonId, isLoading, text) {
+  const btn = document.getElementById(buttonId);
+  if (!btn) return;
+
+  btn.disabled = isLoading;
+  btn.textContent = text;
+  btn.style.opacity = isLoading ? "0.7" : "1";
+}
+
 function togglePassword(inputId) {
   const input = document.getElementById(inputId);
   if (!input) return;
- 
-  if (input.type === "password") {
-    input.type = "text";
-  } else {
-    input.type = "password";
-  }
+
+  input.type = input.type === "password" ? "text" : "password";
 }

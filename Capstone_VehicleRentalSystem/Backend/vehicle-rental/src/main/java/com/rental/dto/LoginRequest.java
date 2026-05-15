@@ -1,9 +1,11 @@
 package com.rental.dto;
 
 import jakarta.validation.constraints.*;
-import lombok.Data;
+import lombok.*;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class LoginRequest {
     @Email @NotBlank
     private String email;
