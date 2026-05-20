@@ -11,6 +11,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByUserId(Long userId);
 
+    @Query("SELECT b FROM Booking b WHERE b.vehicle.owner.id = :ownerId")
+    List<Booking> findByVehicleOwnerId(@Param("ownerId") Long ownerId);
 
     @Query("SELECT b FROM Booking b WHERE b.vehicle.id = :vehicleId " +
             "AND b.status = 'CONFIRMED' " +
@@ -20,4 +22,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate")   LocalDate endDate
     );
+
+    boolean existsByVehicleIdAndStatus(Long vehicleId, Booking.BookingStatus status);
 }

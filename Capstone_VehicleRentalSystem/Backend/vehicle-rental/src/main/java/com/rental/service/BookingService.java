@@ -73,8 +73,20 @@ public class BookingService {
     }
 
     public List<BookingResponse> getAllBookings() {
-        return bookingRepository.findAll()
-                .stream()
+        User currentUser = authService.getCurrentUser();
+        List<Booking> bookings;
+
+        if (currentUser.getRole() == User.Role.VEHICLE_OWNER) {
+            bookings = bookingRepository.findByVehicleOwnerId(currentUser.getId());
+        } else if (currentUser.getRole() == User.Role.SUPERADMIN) {
+            bookings = bookingRepository.findAll();
+        } else {
+            // Regular users shouldn't really be calling getAllBookings (it's protected by PreAuthorize)
+            // but for safety, return empty or their own history
+            return getMyBookingHistory();
+        }
+
+        return bookings.stream()
                 .map(BookingResponse::fromEntity)
                 .collect(Collectors.toList());
     }

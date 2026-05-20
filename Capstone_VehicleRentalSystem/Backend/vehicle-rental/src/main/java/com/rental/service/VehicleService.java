@@ -1,11 +1,15 @@
 package com.rental.service;
 
 import com.rental.dto.VehicleRequest;
+import com.rental.model.Booking;
+import com.rental.model.User;
 import com.rental.model.Vehicle;
+import com.rental.repository.BookingRepository;
 import com.rental.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -13,21 +17,20 @@ import java.util.List;
 public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
+    private final BookingRepository bookingRepository;
     private final AuthService       authService;
 
-    public List<Vehicle> getVehicles(String type, Boolean available) {
+    public List<Vehicle> getVehicles(String type, Boolean available, LocalDate startDate, LocalDate endDate) {
+        User currentUser = authService.getCurrentUser();
         Vehicle.VehicleType vehicleType = parseType(type);
+        Long ownerId = null;
 
-        if (vehicleType != null && available != null) {
-            return vehicleRepository.findByTypeAndIsAvailable(vehicleType, available);
+        // If the logged-in user is a VEHICLE_OWNER, they only see their own vehicles
+        if (currentUser.getRole() == User.Role.VEHICLE_OWNER) {
+            ownerId = currentUser.getId();
         }
-        if (vehicleType != null) {
-            return vehicleRepository.findByType(vehicleType);
-        }
-        if (available != null) {
-            return vehicleRepository.findByIsAvailable(available);
-        }
-        return vehicleRepository.findAll();
+
+        return vehicleRepository.findFiltered(vehicleType, available, startDate, endDate, ownerId);
     }
 
     public Vehicle getVehicleById(Long id) {
@@ -44,8 +47,9 @@ public class VehicleService {
 
     public Vehicle updateVehicle(Long id, VehicleRequest request) {
         Vehicle vehicle = getVehicleById(id);
+        User currentUser = authService.getCurrentUser();
 
-        if (!vehicle.getOwner().getId().equals(authService.getCurrentUser().getId())) {
+        if (!vehicle.getOwner().getId().equals(currentUser.getId()) && !currentUser.getRole().equals(User.Role.SUPERADMIN)) {
             throw new RuntimeException("You are not authorized to update this vehicle");
         }
 
@@ -55,9 +59,15 @@ public class VehicleService {
 
     public void deleteVehicle(Long id) {
         Vehicle vehicle = getVehicleById(id);
+        User currentUser = authService.getCurrentUser();
 
-        if (!vehicle.getOwner().getId().equals(authService.getCurrentUser().getId())) {
+        if (!vehicle.getOwner().getId().equals(currentUser.getId()) && !currentUser.getRole().equals(User.Role.SUPERADMIN)) {
             throw new RuntimeException("You are not authorized to delete this vehicle");
+        }
+
+        // Restrict deletion of booked vehicles
+        if (bookingRepository.existsByVehicleIdAndStatus(id, Booking.BookingStatus.CONFIRMED)) {
+            throw new RuntimeException("Cannot delete vehicle with active confirmed bookings");
         }
 
         vehicleRepository.delete(vehicle);

@@ -35,6 +35,13 @@
         <option value="false">Unavailable</option>
       </select>
 
+      <div class="date-filters">
+        <label for="filterStartDate">From:</label>
+        <input type="date" id="filterStartDate" onchange="loadVehicles()">
+        <label for="filterEndDate">To:</label>
+        <input type="date" id="filterEndDate" onchange="loadVehicles()">
+      </div>
+
       <button class="btn-outline" onclick="clearFilters()">Clear Filters</button>
     </div>
 
@@ -89,10 +96,14 @@
     async function loadVehicles() {
       const type = document.getElementById("typeFilter").value;
       const available = document.getElementById("availabilityFilter").value;
+      const startDate = document.getElementById("filterStartDate").value;
+      const endDate = document.getElementById("filterEndDate").value;
       const params = new URLSearchParams();
 
       if (type) params.set("type", type);
       if (available) params.set("available", available);
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
 
       const url = "/api/vehicles" + (params.toString() ? "?" + params.toString() : "");
       document.getElementById("vehiclesGrid").innerHTML =
@@ -231,6 +242,8 @@
     function clearFilters() {
       document.getElementById("typeFilter").value = "";
       document.getElementById("availabilityFilter").value = "";
+      document.getElementById("filterStartDate").value = "";
+      document.getElementById("filterEndDate").value = "";
       loadVehicles();
     }
 

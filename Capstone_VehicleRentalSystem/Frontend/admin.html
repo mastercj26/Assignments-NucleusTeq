@@ -8,9 +8,9 @@
 </head>
 <body>
   <nav class="navbar">
-    <div class="navbar-brand">Vehicle Rental - Vehicle Owner</div>
+    <div class="navbar-brand">Vehicle Rental - <span id="navRoleTitle">Admin</span></div>
     <div class="navbar-right">
-      <div class="navbar-user">Owner: <span id="navUsername"></span></div>
+      <div class="navbar-user"><span id="navRoleLabel">Admin</span>: <span id="navUsername"></span></div>
       <button class="btn-logout" onclick="logout()">Logout</button>
     </div>
   </nav>
@@ -111,6 +111,15 @@
   <script>
     requireVehicleOwner();
     document.getElementById("navUsername").textContent = getUsername();
+    
+    const role = getRole();
+    if (role === "SUPERADMIN") {
+      document.getElementById("navRoleTitle").textContent = "Superadmin";
+      document.getElementById("navRoleLabel").textContent = "Superadmin";
+    } else {
+      document.getElementById("navRoleTitle").textContent = "Vehicle Owner";
+      document.getElementById("navRoleLabel").textContent = "Owner";
+    }
 
     let editingVehicleId = null;
     let adminVehicles = [];

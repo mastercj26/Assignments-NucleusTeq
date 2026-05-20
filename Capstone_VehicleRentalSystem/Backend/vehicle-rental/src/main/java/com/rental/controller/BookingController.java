@@ -26,7 +26,7 @@ public class BookingController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('VEHICLE_OWNER')")
+    @PreAuthorize("hasAnyRole('VEHICLE_OWNER', 'SUPERADMIN')")
     public ResponseEntity<List<BookingResponse>> getAllBookings() {
         return ResponseEntity.ok(bookingService.getAllBookings());
     }

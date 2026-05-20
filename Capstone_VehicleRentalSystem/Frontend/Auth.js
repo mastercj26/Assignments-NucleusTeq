@@ -39,7 +39,7 @@ function logout() {
 
 function redirectByRole() {
   const role = getRole();
-  if (role === "VEHICLE_OWNER") {
+  if (role === "VEHICLE_OWNER" || role === "SUPERADMIN") {
     window.location.href = "admin.html";
   } else if (role === "USER") {
     window.location.href = "dashboard.html";
@@ -60,8 +60,9 @@ function requireLogin() {
 function requireVehicleOwner() {
   if (!requireLogin()) return false;
   
-  if (getRole() !== "VEHICLE_OWNER") {
-    console.warn("Access denied: Vehicle Owner privileges required.");
+  const role = getRole();
+  if (role !== "VEHICLE_OWNER" && role !== "SUPERADMIN") {
+    console.warn("Access denied: Administrative privileges required.");
     window.location.href = "dashboard.html";
     return false;
   }

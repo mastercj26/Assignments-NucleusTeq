@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -23,8 +24,10 @@ public class VehicleController {
     @GetMapping
     public ResponseEntity<List<Vehicle>> getVehicles(
             @RequestParam(required = false) String type,
-            @RequestParam(required = false) Boolean available) {
-        return ResponseEntity.ok(vehicleService.getVehicles(type, available));
+            @RequestParam(required = false) Boolean available,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate) {
+        return ResponseEntity.ok(vehicleService.getVehicles(type, available, startDate, endDate));
     }
 
     @GetMapping("/{id}")
@@ -33,13 +36,13 @@ public class VehicleController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('VEHICLE_OWNER')")
+    @PreAuthorize("hasAnyRole('VEHICLE_OWNER', 'SUPERADMIN')")
     public ResponseEntity<Vehicle> addVehicle(@Valid @RequestBody VehicleRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(vehicleService.addVehicle(request));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('VEHICLE_OWNER')")
+    @PreAuthorize("hasAnyRole('VEHICLE_OWNER', 'SUPERADMIN')")
     public ResponseEntity<Vehicle> updateVehicle(
             @PathVariable Long id,
             @Valid @RequestBody VehicleRequest request) {
@@ -47,7 +50,7 @@ public class VehicleController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('VEHICLE_OWNER')")
+    @PreAuthorize("hasAnyRole('VEHICLE_OWNER', 'SUPERADMIN')")
     public ResponseEntity<String> deleteVehicle(@PathVariable Long id) {
         vehicleService.deleteVehicle(id);
         return ResponseEntity.ok("Vehicle deleted successfully");

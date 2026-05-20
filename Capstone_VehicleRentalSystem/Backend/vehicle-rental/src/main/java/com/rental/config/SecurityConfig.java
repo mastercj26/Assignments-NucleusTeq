@@ -48,14 +48,14 @@ public class SecurityConfig {
 
                         // ── BOOKING endpoints ──
                         .requestMatchers(HttpMethod.POST, "/api/bookings").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/bookings").hasRole("VEHICLE_OWNER")
+                        .requestMatchers(HttpMethod.GET, "/api/bookings").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/bookings/history").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/bookings/*/cancel").authenticated()
                         
-                        // ── VEHICLE_OWNER only endpoints ──
-                        .requestMatchers(HttpMethod.POST, "/api/vehicles/**").hasRole("VEHICLE_OWNER")
-                        .requestMatchers(HttpMethod.PUT, "/api/vehicles/**").hasRole("VEHICLE_OWNER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/vehicles/**").hasRole("VEHICLE_OWNER")
+                        // ── VEHICLE_OWNER & SUPERADMIN endpoints ──
+                        .requestMatchers(HttpMethod.POST, "/api/vehicles/**").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/vehicles/**").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/vehicles/**").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
 
                         // ── Everything else needs login ──
                         .anyRequest().authenticated()

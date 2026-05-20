@@ -33,5 +33,5 @@ public class User {
     @JsonIgnore
     private List<Booking> bookings;
 
-    public enum Role { USER, VEHICLE_OWNER }
+    public enum Role { USER, VEHICLE_OWNER, SUPERADMIN }
 }

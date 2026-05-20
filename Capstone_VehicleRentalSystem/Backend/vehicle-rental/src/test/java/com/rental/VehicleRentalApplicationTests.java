@@ -33,7 +33,10 @@ class VehicleRentalApplicationTests {
 
     @Test
     void allAuthAndVehicleApiCheckpointsWork() throws Exception {
-        AuthResponse registeredUser = register("Checkpoint User", "checkpoint-user@example.com", "user123");
+        // Register admin if it doesn't exist
+        register("Admin User", "admin@rental.com", "admin123", "VEHICLE_OWNER");
+
+        AuthResponse registeredUser = register("Checkpoint User", "checkpoint-user@example.com", "user123", "USER");
         assertThat(registeredUser.getToken()).isNotBlank();
         assertThat(registeredUser.getRole()).isEqualTo("USER");
 
@@ -98,11 +101,12 @@ class VehicleRentalApplicationTests {
         assertThat(deleted.body()).contains("Vehicle deleted successfully");
     }
 
-    private AuthResponse register(String username, String email, String password) throws Exception {
+    private AuthResponse register(String username, String email, String password, String role) throws Exception {
         RegisterRequest request = new RegisterRequest();
         request.setUsername(username);
         request.setEmail(email);
         request.setPassword(password);
+        request.setRole(role);
 
         HttpResponse<String> response = send("POST", "/api/auth/register", null, request);
 
