@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Capstone_VehicleRentalSystem.iml" filepath="$PROJECT_DIR$/.idea/Capstone_VehicleRentalSystem.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Backend/vehicle-rental/vehicle-rental.iml" filepath="$PROJECT_DIR$/Backend/vehicle-rental/vehicle-rental.iml" />
     </modules>
   </component>
 </project>

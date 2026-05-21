@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Booking {
+public class Vehiclebooked {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

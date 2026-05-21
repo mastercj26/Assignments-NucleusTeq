@@ -17,7 +17,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -27,56 +27,91 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Explicitly permit all OPTIONS
-                        .requestMatchers("/").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/vehicles/**").authenticated()
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
-                        // ── BOOKING endpoints ──
-                        .requestMatchers(HttpMethod.POST, "/api/bookings").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/bookings").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/bookings/history").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/bookings/*/cancel").authenticated()
-                        
-                        // ── VEHICLE_OWNER & SUPERADMIN endpoints ──
-                        .requestMatchers(HttpMethod.POST, "/api/vehicles/**").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/vehicles/**").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/vehicles/**").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
+        http.csrf(csrf -> csrf.disable());
 
-                        // ── Everything else needs login ──
-                        .anyRequest().authenticated()
-                )
-                // Add our JWT filter BEFORE Spring's default filter
-                .addFilterBefore(jwtAuthFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+        http.sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        );
+
+        http.authorizeHttpRequests(auth -> auth
+
+                // allow preflight requests
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // public apis
+                .requestMatchers("/").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+
+                // vehicle apis
+                .requestMatchers(HttpMethod.GET, "/api/vehicles/**").authenticated()
+
+                // booking apis
+                .requestMatchers(HttpMethod.POST, "/api/bookings").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/bookings")
+                .hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
+
+                .requestMatchers(HttpMethod.GET, "/api/bookings/history")
+                .authenticated()
+
+                .requestMatchers(HttpMethod.PUT, "/api/bookings/*/cancel")
+                .authenticated()
+
+                // vehicle owner and admin
+                .requestMatchers(HttpMethod.POST, "/api/vehicles/**")
+                .hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
+
+                .requestMatchers(HttpMethod.PUT, "/api/vehicles/**")
+                .hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
+
+                .requestMatchers(HttpMethod.DELETE, "/api/vehicles/**")
+                .hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
+
+                // all other requests
+                .anyRequest().authenticated()
+        );
+
+        // jwt filter
+        http.addFilterBefore(jwtAuthFilter,
+                UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("*"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-        config.setExposedHeaders(List.of("Authorization"));
-        
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(Arrays.asList("*"));
+
+        configuration.setAllowedMethods(
+                Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        );
+
+        configuration.setAllowedHeaders(
+                Arrays.asList("Authorization", "Content-Type", "Accept")
+        );
+
+        configuration.setExposedHeaders(
+                Arrays.asList("Authorization")
+        );
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration("/**", configuration);
+
         return source;
     }
 }
