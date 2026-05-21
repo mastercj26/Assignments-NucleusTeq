@@ -1,116 +1,70 @@
 package com.rental.service;
 
-import com.rental.dto.AuthResponse;
-import com.rental.dto.LoginRequest;
-import com.rental.dto.RegisterRequest;
+import com.rental.dto.*;
 import com.rental.model.User;
 import com.rental.repository.UserRepository;
 import com.rental.security.JwtUtil;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
-    private UserRepository userRepository;
+    private final UserRepository     userRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final JwtUtil            jwtUtil;
 
-    private BCryptPasswordEncoder passwordEncoder;
-
-    private JwtUtil jwtUtil;
-
-    public AuthService(UserRepository userRepository,
-                       BCryptPasswordEncoder passwordEncoder,
-                       JwtUtil jwtUtil) {
-
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
-    }
-
+    // ── REGISTER ──
     public AuthResponse register(RegisterRequest req) {
-
-        Boolean emailExists =
-                userRepository.existsByEmail(req.getEmail());
-
-        if (emailExists) {
-            throw new RuntimeException("Email already exists");
-        }
+        if (userRepository.existsByEmail(req.getEmail()))
+            throw new RuntimeException("Email already in use");
 
         User user = new User();
-
         user.setUsername(req.getUsername());
-
         user.setEmail(req.getEmail());
-
-        user.setPassword(
-                passwordEncoder.encode(req.getPassword())
-        );
-
-        if (req.getRole() != null &&
-                req.getRole().equalsIgnoreCase("VEHICLE_OWNER")) {
-
+        user.setPassword(passwordEncoder.encode(req.getPassword()));
+        
+        // Allow choosing role, default to USER
+        if (req.getRole() != null && req.getRole().equalsIgnoreCase("VEHICLE_OWNER")) {
             user.setRole(User.Role.VEHICLE_OWNER);
-
         } else {
-
             user.setRole(User.Role.USER);
         }
 
-        userRepository.save(user);
+        userRepository.save(user); // saves to PostgreSQL
 
         String token = jwtUtil.generateToken(
-                user.getEmail(),
-                user.getRole().name()
-        );
-
+                user.getEmail(), user.getRole().name());
         return new AuthResponse(
-                token,
-                user.getRole().name(),
-                user.getUsername()
-        );
+                token, user.getRole().name(), user.getUsername());
     }
 
+    // ── LOGIN ──
     public AuthResponse login(LoginRequest req) {
-
         User user = userRepository.findByEmail(req.getEmail())
-                .orElseThrow(() ->
-                        new RuntimeException("User not found")
-                );
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        boolean passwordMatch =
-                passwordEncoder.matches(
-                        req.getPassword(),
-                        user.getPassword()
-                );
-
-        if (!passwordMatch) {
-            throw new RuntimeException("Wrong password");
-        }
+        if (!passwordEncoder.matches(req.getPassword(), user.getPassword()))
+            throw new RuntimeException("Invalid password");
 
         String token = jwtUtil.generateToken(
-                user.getEmail(),
-                user.getRole().name()
-        );
-
+                user.getEmail(), user.getRole().name());
         return new AuthResponse(
-                token,
-                user.getRole().name(),
-                user.getUsername()
-        );
+                token, user.getRole().name(), user.getUsername());
     }
 
+    // ── GET CURRENTLY LOGGED IN USER ──
+    // Used by BookingService to know who is making the booking
     public User getCurrentUser() {
-
         String email = SecurityContextHolder
                 .getContext()
                 .getAuthentication()
-                .getName();
+                .getName(); // this is the email we stored in JWT subject
 
         return userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found")
-                );
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

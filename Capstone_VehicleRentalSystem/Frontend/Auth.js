@@ -1,284 +1,189 @@
 const API_BASE_URL = "http://localhost:8080";
 
+/**
+ * TOKEN STORAGE LOGIC
+ * Handled via localStorage for persistence across sessions
+ */
+
 function saveUser(token, role, username) {
-
   localStorage.setItem("token", token);
-
   localStorage.setItem("role", role);
-
   localStorage.setItem("username", username);
-
-  localStorage.setItem("loginTime", Date.now());
+  localStorage.setItem("loginTime", Date.now()); // For optional session tracking
 }
 
 function getToken() {
-
   return localStorage.getItem("token");
 }
 
 function getRole() {
-
   return localStorage.getItem("role");
 }
 
 function getUsername() {
-
   return localStorage.getItem("username");
 }
 
 function logout() {
-
   localStorage.removeItem("token");
-
   localStorage.removeItem("role");
-
   localStorage.removeItem("username");
-
   localStorage.removeItem("loginTime");
-
   window.location.href = "login.html";
 }
 
+/**
+ * ROUTING LOGIC
+ * Centralized navigation and access control
+ */
+
 function redirectByRole() {
-
   const role = getRole();
-
   if (role === "VEHICLE_OWNER" || role === "SUPERADMIN") {
-
     window.location.href = "admin.html";
-
   } else if (role === "USER") {
-
     window.location.href = "dashboard.html";
-
   } else {
-
     logout();
   }
 }
 
 function requireLogin() {
-
-  const token = getToken();
-
-  if (!token) {
-
+  if (!getToken()) {
+    console.warn("Unauthorized access: No token found. Redirecting to login.");
     window.location.href = "login.html";
-
     return false;
   }
-
   return true;
 }
 
 function requireVehicleOwner() {
-
-  if (!requireLogin()) {
-    return false;
-  }
-
+  if (!requireLogin()) return false;
+  
   const role = getRole();
-
-  if (role !== "VEHICLE_OWNER" &&
-      role !== "SUPERADMIN") {
-
+  if (role !== "VEHICLE_OWNER" && role !== "SUPERADMIN") {
+    console.warn("Access denied: Administrative privileges required.");
     window.location.href = "dashboard.html";
-
     return false;
   }
-
   return true;
 }
 
+/**
+ * API UTILITIES
+ * Automatic token attachment and 401/403 handling
+ */
+
 async function apiCall(url, method = "GET", body = null) {
-
   const token = getToken();
-
+  
   const options = {
-    method: method,
+    method,
     headers: {
       "Content-Type": "application/json"
     }
   };
 
   if (token) {
-
-    options.headers["Authorization"] =
-        "Bearer " + token;
+    options.headers["Authorization"] = "Bearer " + token;
   }
 
   if (body) {
-
     options.body = JSON.stringify(body);
   }
 
   try {
+    const response = await fetch(API_BASE_URL + url, options);
 
-    const response = await fetch(
-        API_BASE_URL + url,
-        options
-    );
-
-    if (response.status === 401 ||
-        response.status === 403) {
-
+    // If token is expired or invalid, logout and redirect
+    if (response.status === 401 || response.status === 403) {
+      console.error("Session expired or unauthorized. Logging out...");
       logout();
-
       return null;
     }
 
     return response;
-
-  } catch (error) {
-
-    console.log(error);
-
-    throw error;
+  } catch (err) {
+    console.error("Network error during API call:", err);
+    throw err;
   }
 }
 
 async function authRequest(url, body) {
-
   try {
-
-    const response = await fetch(
-        API_BASE_URL + url,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(body)
-        }
-    );
+    const response = await fetch(API_BASE_URL + url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
 
     let data = {};
-
     try {
-
       data = await response.json();
-
-    } catch (e) {
-
+    } catch (err) {
       data = {};
     }
 
-    return {
-      response,
-      data
-    };
-
-  } catch (error) {
-
-    console.log(error);
-
-    throw error;
+    return { response, data };
+  } catch (err) {
+    console.error("Auth request failed:", err);
+    throw err;
   }
 }
 
+/**
+ * UI UTILITIES
+ */
+
 function isValidEmail(email) {
-
-  const pattern =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  return pattern.test(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function showMessage(text, type) {
-
-  const box =
-      document.getElementById("message");
-
-  if (!box) {
-    return;
-  }
+  const box = document.getElementById("message");
+  if (!box) return;
 
   box.textContent = text;
-
   box.className = "message " + type;
-
   box.style.display = "block";
 
-  setTimeout(function () {
-
+  setTimeout(() => {
     box.style.display = "none";
-
   }, 4000);
 }
 
 function showFieldError(fieldId, text) {
+  const el = document.getElementById(fieldId);
+  if (!el) return;
 
-  const element =
-      document.getElementById(fieldId);
-
-  if (!element) {
-    return;
-  }
-
-  element.textContent = text;
-
-  element.style.display = "block";
+  el.textContent = text;
+  el.style.display = "block";
 }
 
 function clearErrors() {
-
-  const errors =
-      document.querySelectorAll(".error-text");
-
-  errors.forEach(function (el) {
-
+  document.querySelectorAll(".error-text").forEach(el => {
     el.textContent = "";
-
     el.style.display = "none";
   });
 
-  const message =
-      document.getElementById("message");
-
-  if (message) {
-
-    message.style.display = "none";
+  const msg = document.getElementById("message");
+  if (msg) {
+    msg.style.display = "none";
   }
 }
 
 function setLoading(buttonId, isLoading, text) {
+  const btn = document.getElementById(buttonId);
+  if (!btn) return;
 
-  const button =
-      document.getElementById(buttonId);
-
-  if (!button) {
-    return;
-  }
-
-  button.disabled = isLoading;
-
-  button.textContent = text;
-
-  if (isLoading) {
-
-    button.style.opacity = "0.7";
-
-  } else {
-
-    button.style.opacity = "1";
-  }
+  btn.disabled = isLoading;
+  btn.textContent = text;
+  btn.style.opacity = isLoading ? "0.7" : "1";
 }
 
 function togglePassword(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
 
-  const input =
-      document.getElementById(inputId);
-
-  if (!input) {
-    return;
-  }
-
-  if (input.type === "password") {
-
-    input.type = "text";
-
-  } else {
-
-    input.type = "password";
-  }
+  input.type = input.type === "password" ? "text" : "password";
 }
