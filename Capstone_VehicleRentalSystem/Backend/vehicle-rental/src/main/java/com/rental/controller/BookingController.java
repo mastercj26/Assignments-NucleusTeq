@@ -4,7 +4,7 @@ import com.rental.dto.BookingRequest;
 import com.rental.dto.BookingResponse;
 import com.rental.service.BookingService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,26 +14,29 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/bookings")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class BookingController {
 
-    private final BookingService bookingService;
+    @Autowired
+    private BookingService bookingService;
 
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.createBooking(request));
+        BookingResponse response = bookingService.createBooking(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('VEHICLE_OWNER', 'SUPERADMIN')")
     public ResponseEntity<List<BookingResponse>> getAllBookings() {
-        return ResponseEntity.ok(bookingService.getAllBookings());
+        List<BookingResponse> bookings = bookingService.getAllBookings();
+        return ResponseEntity.ok(bookings);
     }
 
     @GetMapping("/history")
     public ResponseEntity<List<BookingResponse>> getBookingHistory() {
-        return ResponseEntity.ok(bookingService.getMyBookingHistory());
+        List<BookingResponse> history = bookingService.getMyBookingHistory();
+        return ResponseEntity.ok(history);
     }
 
     @PutMapping("/{id}/cancel")
