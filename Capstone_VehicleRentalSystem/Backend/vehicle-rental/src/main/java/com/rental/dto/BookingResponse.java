@@ -1,6 +1,6 @@
 package com.rental.dto;
 
-import com.rental.model.Vehiclebooked;
+import com.rental.model.Booking;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,7 +20,7 @@ public class BookingResponse {
     private BigDecimal totalPrice;
     private String status;
 
-    public static BookingResponse fromEntity(Vehiclebooked booking) {
+    public static BookingResponse fromEntity(Booking booking) {
         return new BookingResponse(
                 booking.getId(),
                 booking.getUser().getUsername(),

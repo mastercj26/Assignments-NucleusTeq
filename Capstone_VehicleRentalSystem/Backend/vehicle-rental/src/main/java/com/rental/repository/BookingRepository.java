@@ -1,34 +1,27 @@
 package com.rental.repository;
 
-import com.rental.model.Vehiclebooked;
-
+import com.rental.model.Booking;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.time.LocalDate;
 import java.util.List;
 
-public interface BookingRepository extends JpaRepository<Vehiclebooked, Long> {
+public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    List<Vehiclebooked> findByUserId(Long userId);
+    List<Booking> findByUserId(Long userId);
 
-    @Query("SELECT b FROM Vehiclebooked b WHERE b.vehicle.owner.id = :ownerId")
-    List<Vehiclebooked> getBookingsByOwner(@Param("ownerId") Long ownerId);
+    @Query("SELECT b FROM Booking b WHERE b.vehicle.owner.id = :ownerId")
+    List<Booking> findByVehicleOwnerId(@Param("ownerId") Long ownerId);
 
-    @Query("SELECT b FROM Vehiclebooked b WHERE " +
-            "b.vehicle.id = :vehicleId " +
+    @Query("SELECT b FROM Booking b WHERE b.vehicle.id = :vehicleId " +
             "AND b.status = 'CONFIRMED' " +
-            "AND b.startDate < :endDate " +
-            "AND b.endDate > :startDate")
-    List<Vehiclebooked> checkVehicleBooking(
+            "AND b.startDate < :endDate AND b.endDate > :startDate")
+    List<Booking> findOverlappingBookings(
             @Param("vehicleId") Long vehicleId,
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
+            @Param("endDate")   LocalDate endDate
     );
 
-    boolean existsByVehicleIdAndStatus(
-            Long vehicleId,
-            Vehiclebooked.BookingStatus status
-    );
+    boolean existsByVehicleIdAndStatus(Long vehicleId, Booking.BookingStatus status);
 }

@@ -3,27 +3,25 @@ package com.rental.controller;
 import com.rental.dto.*;
 import com.rental.service.AuthService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest req) {
-        AuthResponse response = authService.register(req);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(authService.register(req));
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest req) {
-        AuthResponse response = authService.login(req);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(authService.login(req));
     }
 }
