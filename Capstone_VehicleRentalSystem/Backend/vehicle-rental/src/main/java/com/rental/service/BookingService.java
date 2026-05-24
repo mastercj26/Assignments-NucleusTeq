@@ -7,6 +7,9 @@ import com.rental.model.User;
 import com.rental.model.Vehicle;
 import com.rental.repository.BookingRepository;
 import com.rental.repository.VehicleRepository;
+import com.rental.exception.RentalException;
+import com.rental.exception.ResourceNotFoundException;
+import com.rental.exception.UnauthorizedAccessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,14 +32,14 @@ public class BookingService {
     public BookingResponse createBooking(BookingRequest request) {
         User user = authService.getCurrentUser();
         Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
-                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with id: " + request.getVehicleId()));
 
         if (!vehicle.getIsAvailable()) {
-            throw new RuntimeException("Vehicle is currently not available for rent");
+            throw new RentalException("Vehicle is currently not available for rent");
         }
 
         if (request.getEndDate().isBefore(request.getStartDate())) {
-            throw new RuntimeException("End date cannot be before start date");
+            throw new RentalException("End date cannot be before start date");
         }
 
         // --- Overlap Validation Logic (CRITICAL) ---
@@ -45,12 +48,12 @@ public class BookingService {
         );
 
         if (!overlapping.isEmpty()) {
-            throw new RuntimeException("Vehicle is already booked for the selected dates");
+            throw new RentalException("Vehicle is already booked for the selected dates");
         }
 
         // Calculate Total Price
         long days = ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate());
-        if (days == 0) days = 1; // Minimum 1 day charge
+        if (days <= 0) days = 1; // Minimum 1 day charge
         BigDecimal total = vehicle.getPricePerDay().multiply(BigDecimal.valueOf(days));
 
         Booking booking = new Booking();
@@ -95,19 +98,19 @@ public class BookingService {
     public void cancelBooking(Long bookingId) {
         User user = authService.getCurrentUser();
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         // Check if user is owner or VEHICLE_OWNER
         if (!booking.getUser().getId().equals(user.getId()) && !user.getRole().equals(User.Role.VEHICLE_OWNER)) {
-            throw new RuntimeException("Unauthorized to cancel this booking");
+            throw new UnauthorizedAccessException("Unauthorized to cancel this booking");
         }
 
         if (booking.getStatus() == Booking.BookingStatus.CANCELLED) {
-            throw new RuntimeException("Booking is already cancelled");
+            throw new RentalException("Booking is already cancelled");
         }
 
         if (booking.getStartDate().isBefore(LocalDate.now())) {
-            throw new RuntimeException("Cannot cancel a booking that has already started");
+            throw new RentalException("Cannot cancel a booking that has already started");
         }
 
         booking.setStatus(Booking.BookingStatus.CANCELLED);

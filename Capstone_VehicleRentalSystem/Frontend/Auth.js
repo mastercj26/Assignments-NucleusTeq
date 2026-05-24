@@ -1,9 +1,6 @@
 const API_BASE_URL = "http://localhost:8080";
 
-/**
- * TOKEN STORAGE LOGIC
- * Handled via localStorage for persistence across sessions
- */
+
 
 function saveUser(token, role, username) {
   localStorage.setItem("token", token);
@@ -32,10 +29,7 @@ function logout() {
   window.location.href = "login.html";
 }
 
-/**
- * ROUTING LOGIC
- * Centralized navigation and access control
- */
+
 
 function redirectByRole() {
   const role = getRole();
@@ -69,10 +63,7 @@ function requireVehicleOwner() {
   return true;
 }
 
-/**
- * API UTILITIES
- * Automatic token attachment and 401/403 handling
- */
+
 
 async function apiCall(url, method = "GET", body = null) {
   const token = getToken();

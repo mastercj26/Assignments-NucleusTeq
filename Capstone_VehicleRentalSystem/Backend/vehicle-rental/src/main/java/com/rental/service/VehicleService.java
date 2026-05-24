@@ -6,6 +6,9 @@ import com.rental.model.User;
 import com.rental.model.Vehicle;
 import com.rental.repository.BookingRepository;
 import com.rental.repository.VehicleRepository;
+import com.rental.exception.RentalException;
+import com.rental.exception.ResourceNotFoundException;
+import com.rental.exception.UnauthorizedAccessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +38,7 @@ public class VehicleService {
 
     public Vehicle getVehicleById(Long id) {
         return vehicleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Vehicle not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with id: " + id));
     }
 
     public Vehicle addVehicle(VehicleRequest request) {
@@ -50,7 +53,7 @@ public class VehicleService {
         User currentUser = authService.getCurrentUser();
 
         if (!vehicle.getOwner().getId().equals(currentUser.getId()) && !currentUser.getRole().equals(User.Role.SUPERADMIN)) {
-            throw new RuntimeException("You are not authorized to update this vehicle");
+            throw new UnauthorizedAccessException("You are not authorized to update this vehicle");
         }
 
         applyRequest(vehicle, request);
@@ -62,12 +65,12 @@ public class VehicleService {
         User currentUser = authService.getCurrentUser();
 
         if (!vehicle.getOwner().getId().equals(currentUser.getId()) && !currentUser.getRole().equals(User.Role.SUPERADMIN)) {
-            throw new RuntimeException("You are not authorized to delete this vehicle");
+            throw new UnauthorizedAccessException("You are not authorized to delete this vehicle");
         }
 
         // Restrict deletion of booked vehicles
         if (bookingRepository.existsByVehicleIdAndStatus(id, Booking.BookingStatus.CONFIRMED)) {
-            throw new RuntimeException("Cannot delete vehicle with active confirmed bookings");
+            throw new RentalException("Cannot delete vehicle with active confirmed bookings");
         }
 
         vehicleRepository.delete(vehicle);
@@ -91,8 +94,8 @@ public class VehicleService {
     private Vehicle.VehicleType parseRequiredType(String type) {
         try {
             return Vehicle.VehicleType.valueOf(type.trim().toUpperCase());
-        } catch (IllegalArgumentException | NullPointerException ex) {
-            throw new RuntimeException("Vehicle type must be CAR or BIKE");
+        } catch (IllegalArgumentException | NullPointerException exception) {
+            throw new RentalException("Vehicle type must be CAR or BIKE");
         }
     }
 }
