@@ -5,6 +5,7 @@ import com.rental.model.Vehicle;
 import com.rental.service.VehicleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,11 +15,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/vehicles")
+@RequestMapping("/v1/vehicles")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class VehicleController {
-
+     @Autowired
     private final VehicleService vehicleService;
 
     @GetMapping

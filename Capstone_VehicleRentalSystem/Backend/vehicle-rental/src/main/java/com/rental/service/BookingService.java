@@ -11,6 +11,8 @@ import com.rental.exception.RentalException;
 import com.rental.exception.ResourceNotFoundException;
 import com.rental.exception.UnauthorizedAccessException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BookingService {
 
+    private static final Logger logger = LoggerFactory.getLogger(BookingService.class);
+
     private final BookingRepository bookingRepository;
     private final VehicleRepository vehicleRepository;
     private final AuthService       authService;
@@ -31,27 +35,36 @@ public class BookingService {
     @Transactional
     public BookingResponse createBooking(BookingRequest request) {
         User user = authService.getCurrentUser();
+        logger.info("User {} is creating a booking for vehicle id {}", user.getEmail(), request.getVehicleId());
+
         Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with id: " + request.getVehicleId()));
+                .orElseThrow(() -> {
+                    logger.error("Booking failed: Vehicle id {} not found", request.getVehicleId());
+                    return new ResourceNotFoundException("Vehicle not found with id: " + request.getVehicleId());
+                });
 
         if (!vehicle.getIsAvailable()) {
+            logger.warn("Booking failed: Vehicle {} is not available", vehicle.getName());
             throw new RentalException("Vehicle is currently not available for rent");
         }
 
         if (request.getEndDate().isBefore(request.getStartDate())) {
+            logger.warn("Booking failed: Invalid dates - start: {}, end: {}", request.getStartDate(), request.getEndDate());
             throw new RentalException("End date cannot be before start date");
         }
 
         // --- Overlap Validation Logic (CRITICAL) ---
         List<Booking> overlapping = bookingRepository.findOverlappingBookings(
-                vehicle.getId(), request.getStartDate(), request.getEndDate()
+                vehicle.getId(), request.getStartDate(), request.getEndDate(), Booking.BookingStatus.CONFIRMED
         );
 
         if (!overlapping.isEmpty()) {
+            logger.warn("Booking failed: Vehicle {} has overlapping bookings for selected dates", vehicle.getName());
             throw new RentalException("Vehicle is already booked for the selected dates");
         }
 
         // Calculate Total Price
+
         long days = ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate());
         if (days <= 0) days = 1; // Minimum 1 day charge
         BigDecimal total = vehicle.getPricePerDay().multiply(BigDecimal.valueOf(days));
@@ -64,7 +77,9 @@ public class BookingService {
         booking.setTotalPrice(total);
         booking.setStatus(Booking.BookingStatus.CONFIRMED);
 
-        return BookingResponse.fromEntity(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+        logger.info("Booking created successfully with id: {}", savedBooking.getId());
+        return BookingResponse.fromEntity(savedBooking);
     }
 
     public List<BookingResponse> getMyBookingHistory() {

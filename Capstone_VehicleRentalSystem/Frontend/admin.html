@@ -142,7 +142,7 @@
       document.getElementById("vehiclesGrid").innerHTML = '<div class="loading">Loading vehicles...</div>';
 
       try {
-        const response = await apiCall("/api/vehicles");
+        const response = await v1Call("/v1/vehicles");
         if (!response || !response.ok) {
           showMessage("Could not load vehicles.", "error");
           return;
@@ -236,9 +236,9 @@
 
       try {
         const body = { name, type, description, pricePerDay, isAvailable };
-        const url = editingVehicleId ? "/api/vehicles/" + editingVehicleId : "/api/vehicles";
+        const url = editingVehicleId ? "/v1/vehicles/" + editingVehicleId : "/v1/vehicles";
         const method = editingVehicleId ? "PUT" : "POST";
-        const response = await apiCall(url, method, body);
+        const response = await v1Call(url, method, body);
 
         if (response && response.ok) {
           showModalMsg(editingVehicleId ? "Vehicle updated." : "Vehicle added.", "success");
@@ -263,7 +263,7 @@
       if (!confirm("Delete vehicle: " + name + "? This cannot be undone.")) return;
 
       try {
-        const response = await apiCall("/api/vehicles/" + id, "DELETE");
+        const response = await v1Call("/v1/vehicles/" + id, "DELETE");
 
         if (response && response.ok) {
           showMessage("Vehicle deleted successfully.", "success");
@@ -278,7 +278,7 @@
 
     async function loadAllBookings() {
       try {
-        const response = await apiCall("/api/bookings"); 
+        const response = await v1Call("/v1/bookings"); 
         if (!response || !response.ok) {
           showMessage("Could not load bookings.", "error");
           return;

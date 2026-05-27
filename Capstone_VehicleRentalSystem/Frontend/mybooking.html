@@ -54,7 +54,7 @@
     // ── Load all bookings of logged-in user ──
     async function loadMyBookings() {
       try {
-        const response = await apiCall("/api/bookings/history");
+        const response = await v1Call("/v1/bookings/history");
         const bookings = await response.json();
  
         const tbody = document.getElementById("bookingsBody");
@@ -105,7 +105,7 @@
       if (!confirmed) return;
  
       try {
-        const response = await apiCall("/api/bookings/" + bookingId + "/cancel", "PUT");
+        const response = await v1Call("/v1/bookings/" + bookingId + "/cancel", "PUT");
  
         if (response.ok) {
           showMessage("Booking cancelled successfully.", "success");

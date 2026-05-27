@@ -38,32 +38,32 @@ class VehicleOwnershipTests {
 
         // 2. Owner 1 adds a vehicle
         VehicleRequest v1Req = vehicleRequest("Owner 1 Car", "CAR", "O1 Car", "1000", true);
-        HttpResponse<String> v1Resp = send("POST", "/api/vehicles", owner1.getToken(), v1Req);
+        HttpResponse<String> v1Resp = send("POST", "/v1/vehicles", owner1.getToken(), v1Req);
         assertThat(v1Resp.statusCode()).isEqualTo(HttpStatus.CREATED.value());
         Vehicle v1 = objectMapper.readValue(v1Resp.body(), Vehicle.class);
 
         // 3. Owner 2 adds a vehicle
         VehicleRequest v2Req = vehicleRequest("Owner 2 Bike", "BIKE", "O2 Bike", "500", true);
-        HttpResponse<String> v2Resp = send("POST", "/api/vehicles", owner2.getToken(), v2Req);
+        HttpResponse<String> v2Resp = send("POST", "/v1/vehicles", owner2.getToken(), v2Req);
         assertThat(v2Resp.statusCode()).isEqualTo(HttpStatus.CREATED.value());
         Vehicle v2 = objectMapper.readValue(v2Resp.body(), Vehicle.class);
 
         // 4. Owner 1 lists vehicles - should only see their own
-        HttpResponse<String> listO1Resp = send("GET", "/api/vehicles", owner1.getToken(), null);
+        HttpResponse<String> listO1Resp = send("GET", "/v1/vehicles", owner1.getToken(), null);
         Vehicle[] listO1 = objectMapper.readValue(listO1Resp.body(), Vehicle[].class);
         assertThat(listO1).allMatch(v -> v.getOwner().getUsername().equals("Owner One"));
         assertThat(listO1).anyMatch(v -> v.getId().equals(v1.getId()));
         assertThat(listO1).noneMatch(v -> v.getId().equals(v2.getId()));
 
         // 5. Owner 2 lists vehicles - should only see their own
-        HttpResponse<String> listO2Resp = send("GET", "/api/vehicles", owner2.getToken(), null);
+        HttpResponse<String> listO2Resp = send("GET", "/v1/vehicles", owner2.getToken(), null);
         Vehicle[] listO2 = objectMapper.readValue(listO2Resp.body(), Vehicle[].class);
         assertThat(listO2).allMatch(v -> v.getOwner().getUsername().equals("Owner Two"));
         assertThat(listO2).anyMatch(v -> v.getId().equals(v2.getId()));
         assertThat(listO2).noneMatch(v -> v.getId().equals(v1.getId()));
 
         // 6. Regular user lists vehicles - should see both
-        HttpResponse<String> listUserResp = send("GET", "/api/vehicles", user.getToken(), null);
+        HttpResponse<String> listUserResp = send("GET", "/v1/vehicles", user.getToken(), null);
         Vehicle[] listUser = objectMapper.readValue(listUserResp.body(), Vehicle[].class);
         assertThat(listUser).anyMatch(v -> v.getId().equals(v1.getId()));
         assertThat(listUser).anyMatch(v -> v.getId().equals(v2.getId()));
@@ -76,7 +76,7 @@ class VehicleOwnershipTests {
         request.setPassword(password);
         request.setRole(role);
 
-        HttpResponse<String> response = send("POST", "/api/auth/register", null, request);
+        HttpResponse<String> response = send("POST", "/v1/auth/register", null, request);
         assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
         
         var json = objectMapper.readTree(response.body());

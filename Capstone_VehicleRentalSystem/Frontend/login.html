@@ -88,7 +88,7 @@
       setLoading("loginBtn", true, "Logging in...");
 
       try {
-        const { response, data } = await authRequest("/api/auth/login", { email, password });
+        const { response, data } = await authRequest("/v1/auth/login", { email, password });
 
         if (response.ok) {
           if (data.role !== role) {

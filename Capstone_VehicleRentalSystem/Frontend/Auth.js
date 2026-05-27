@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8080";
+const SERVICE_BASE_URL = "http://localhost:8080";
 
 
 
@@ -65,9 +65,9 @@ function requireVehicleOwner() {
 
 
 
-async function apiCall(url, method = "GET", body = null) {
+async function v1Call(url, method = "GET", body = null) {
   const token = getToken();
-  
+
   const options = {
     method,
     headers: {
@@ -84,7 +84,7 @@ async function apiCall(url, method = "GET", body = null) {
   }
 
   try {
-    const response = await fetch(API_BASE_URL + url, options);
+    const response = await fetch(SERVICE_BASE_URL + url, options);
 
     // If token is expired or invalid, logout and redirect
     if (response.status === 401 || response.status === 403) {
@@ -95,14 +95,14 @@ async function apiCall(url, method = "GET", body = null) {
 
     return response;
   } catch (err) {
-    console.error("Network error during API call:", err);
+    console.error("Network error during service call:", err);
     throw err;
   }
 }
 
 async function authRequest(url, body) {
   try {
-    const response = await fetch(API_BASE_URL + url, {
+    const response = await fetch(SERVICE_BASE_URL + url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)

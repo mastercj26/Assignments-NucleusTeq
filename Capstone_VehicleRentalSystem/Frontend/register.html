@@ -118,7 +118,7 @@
       setLoading("registerBtn", true, "Creating account...");
 
       try {
-        const { response, data } = await authRequest("/api/auth/register", {
+        const { response, data } = await authRequest("/v1/auth/register", {
           username,
           email,
           password,

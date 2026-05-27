@@ -22,18 +22,31 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final BookingRepository bookingRepository;
     private final AuthService       authService;
-
     public List<Vehicle> getVehicles(String type, Boolean available, LocalDate startDate, LocalDate endDate) {
         User currentUser = authService.getCurrentUser();
         Vehicle.VehicleType vehicleType = parseType(type);
         Long ownerId = null;
 
-        // If the logged-in user is a VEHICLE_OWNER, they only see their own vehicles
         if (currentUser.getRole() == User.Role.VEHICLE_OWNER) {
             ownerId = currentUser.getId();
         }
 
-        return vehicleRepository.findFiltered(vehicleType, available, startDate, endDate, ownerId);
+        if (startDate != null && endDate == null) startDate = null;
+        if (endDate != null && startDate == null) endDate = null;
+
+        if (startDate != null && endDate != null && !endDate.isAfter(startDate)) {
+            throw new RentalException("End date must be after start date");
+        }
+
+
+        return vehicleRepository.findFiltered(
+                vehicleType != null ? vehicleType.name() : null,
+                available,
+                startDate,
+                endDate,
+                ownerId,
+                Booking.BookingStatus.CONFIRMED.name()
+        );
     }
 
     public Vehicle getVehicleById(Long id) {

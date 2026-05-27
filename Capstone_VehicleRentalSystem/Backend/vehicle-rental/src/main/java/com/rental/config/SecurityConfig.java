@@ -40,29 +40,20 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Explicitly permit all OPTIONS
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/vehicles/**").authenticated()
-
-                        // ── BOOKING endpoints ──
-                        .requestMatchers(HttpMethod.POST, "/api/bookings").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/bookings").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/bookings/history").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/bookings/*/cancel").authenticated()
-                        
-                        // ── VEHICLE_OWNER & SUPERADMIN endpoints ──
-                        .requestMatchers(HttpMethod.POST, "/api/vehicles/**").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/vehicles/**").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/vehicles/**").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
-
-                        // ── Everything else needs login ──
+                        .requestMatchers("/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v1/vehicles/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/v1/bookings").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/v1/bookings/history").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/v1/bookings").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/v1/bookings/*/cancel").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/v1/vehicles/**").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/v1/vehicles/**").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/v1/vehicles/**").hasAnyRole("VEHICLE_OWNER", "SUPERADMIN")
                         .anyRequest().authenticated()
                 )
-                // Add our JWT filter BEFORE Spring's default filter
-                .addFilterBefore(jwtAuthFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

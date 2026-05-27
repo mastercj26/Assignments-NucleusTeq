@@ -16,13 +16,11 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relationship: Many bookings belong to one User
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // Relationship: Many bookings belong to one Vehicle
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "vehicle_id", nullable = false)
     private Vehicle vehicle;
 
@@ -39,5 +37,7 @@ public class Booking {
     @Column(nullable = false)
     private BookingStatus status = BookingStatus.CONFIRMED;
 
-    public enum BookingStatus { CONFIRMED, CANCELLED }
+    public enum BookingStatus {
+        CONFIRMED, CANCELLED
+    }
 }

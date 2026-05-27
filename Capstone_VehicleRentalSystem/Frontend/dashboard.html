@@ -37,9 +37,10 @@
 
       <div class="date-filters">
         <label for="filterStartDate">From:</label>
-        <input type="date" id="filterStartDate" onchange="loadVehicles()">
+        <input type="date" id="filterStartDate">
         <label for="filterEndDate">To:</label>
-        <input type="date" id="filterEndDate" onchange="loadVehicles()">
+        <input type="date" id="filterEndDate">
+        <button class="btn-primary" style="width:auto;padding:8px 16px;margin-left:8px;" onclick="loadVehicles()">Search Availability</button>
       </div>
 
       <button class="btn-outline" onclick="clearFilters()">Clear Filters</button>
@@ -94,24 +95,32 @@
     let selectedVehicleId = null;
 
     async function loadVehicles() {
+      const grid = document.getElementById("vehiclesGrid");
       const type = document.getElementById("typeFilter").value;
       const available = document.getElementById("availabilityFilter").value;
       const startDate = document.getElementById("filterStartDate").value;
       const endDate = document.getElementById("filterEndDate").value;
-      const params = new URLSearchParams();
+      
+      if (startDate && endDate && endDate < startDate) {
+        grid.innerHTML = '<div class="empty-state"><p>Invalid date range selected.</p></div>';
+        showMessage("End date cannot be before start date.", "error");
+        return;
+      }
 
+      const params = new URLSearchParams();
       if (type) params.set("type", type);
       if (available) params.set("available", available);
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
 
-      const url = "/api/vehicles" + (params.toString() ? "?" + params.toString() : "");
-      document.getElementById("vehiclesGrid").innerHTML =
-        '<div class="loading">Loading vehicles...</div>';
+      const url = "/v1/vehicles" + (params.toString() ? "?" + params.toString() : "");
+      grid.innerHTML = '<div class="loading">Loading vehicles...</div>';
 
       try {
-        const response = await apiCall(url);
+        const response = await v1Call(url);
         if (!response || !response.ok) {
+          const errorText = response ? `Status: ${response.status}` : "Network error";
+          grid.innerHTML = `<div class="empty-state"><p>Could not load vehicles (${errorText}). Please try again.</p></div>`;
           showMessage("Could not load vehicles.", "error");
           return;
         }
@@ -119,6 +128,8 @@
         currentVehicles = await response.json();
         renderVehicles();
       } catch (err) {
+        console.error("Error loading vehicles:", err);
+        grid.innerHTML = '<div class="empty-state"><p>Server error while loading vehicles.</p></div>';
         showMessage("Server error while loading vehicles.", "error");
       }
     }
@@ -126,7 +137,7 @@
     function renderVehicles() {
       const grid = document.getElementById("vehiclesGrid");
 
-      if (currentVehicles.length === 0) {
+      if (!currentVehicles || currentVehicles.length === 0) {
         grid.innerHTML = '<div class="empty-state"><p>No vehicles match these filters.</p></div>';
         return;
       }
@@ -209,7 +220,7 @@
       setLoading("confirmBookingBtn", true, "Booking...");
 
       try {
-        const response = await apiCall("/api/bookings", "POST", {
+        const response = await v1Call("/v1/bookings", "POST", {
           vehicleId: selectedVehicleId,
           startDate,
           endDate
@@ -248,12 +259,13 @@
     }
 
     function escapeHtml(value) {
+      if (value === null || value === undefined) return "";
       return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
     loadVehicles();

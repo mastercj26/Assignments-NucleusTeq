@@ -5,14 +5,25 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="29c1a81f-1db7-4202-9297-8c40b05ac183" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../.idea/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../.idea/compiler.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../.idea/jarRepositories.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/controller/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/controller/AuthController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/controller/BookingController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/controller/BookingController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/controller/VehicleController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/controller/VehicleController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/exception/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/exception/GlobalExceptionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/model/Booking.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/model/Booking.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/security/JwtAuthFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/security/JwtAuthFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/security/JwtUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/security/JwtUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/service/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/service/AuthService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/service/BookingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/vehicle-rental/src/main/java/com/rental/service/BookingService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/vehicle-rental/src/test/java/com/rental/VehicleOwnershipTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/vehicle-rental/src/test/java/com/rental/VehicleOwnershipTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/vehicle-rental/src/test/java/com/rental/VehicleRentalApplicationTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/vehicle-rental/src/test/java/com/rental/VehicleRentalApplicationTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/Auth.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Auth.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/admin.html" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/admin.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/dashboard.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/login.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/mybooking.html" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/mybooking.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/register.html" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/register.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -129,7 +140,7 @@
       <workItem from="1778731076162" duration="17733000" />
       <workItem from="1779166982849" duration="23413000" />
       <workItem from="1779342641192" duration="5852000" />
-      <workItem from="1779422737181" duration="23214000" />
+      <workItem from="1779422737181" duration="24267000" />
     </task>
     <servers />
   </component>

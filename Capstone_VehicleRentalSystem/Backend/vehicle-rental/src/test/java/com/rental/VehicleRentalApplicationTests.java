@@ -32,7 +32,7 @@ class VehicleRentalApplicationTests {
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
     @Test
-    void allAuthAndVehicleApiCheckpointsWork() throws Exception {
+    void allAuthAndVehicleV1CheckpointsWork() throws Exception {
         // Register admin if it doesn't exist
         register("Admin User", "admin@rental.com", "admin123", "VEHICLE_OWNER");
 
@@ -44,42 +44,42 @@ class VehicleRentalApplicationTests {
         AuthResponse admin = login("admin@rental.com", "admin123");
         assertThat(admin.getRole()).isEqualTo("VEHICLE_OWNER");
 
-        HttpResponse<String> blockedVehicles = send("GET", "/api/vehicles", null, null);
+        HttpResponse<String> blockedVehicles = send("GET", "/v1/vehicles", null, null);
         assertThat(blockedVehicles.statusCode()).isIn(HttpStatus.UNAUTHORIZED.value(), HttpStatus.FORBIDDEN.value());
 
-        HttpResponse<String> seededVehiclesResponse = send("GET", "/api/vehicles", user.getToken(), null);
+        HttpResponse<String> seededVehiclesResponse = send("GET", "/v1/vehicles", user.getToken(), null);
         assertThat(seededVehiclesResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
         Vehicle[] seededVehicles = read(seededVehiclesResponse, Vehicle[].class);
         assertThat(seededVehicles).hasSizeGreaterThanOrEqualTo(2);
 
         Long firstVehicleId = seededVehicles[0].getId();
-        HttpResponse<String> vehicleDetailsResponse = send("GET", "/api/vehicles/" + firstVehicleId, user.getToken(), null);
+        HttpResponse<String> vehicleDetailsResponse = send("GET", "/v1/vehicles/" + firstVehicleId, user.getToken(), null);
         assertThat(vehicleDetailsResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
         Vehicle vehicleDetails = read(vehicleDetailsResponse, Vehicle.class);
         assertThat(vehicleDetails.getId()).isEqualTo(firstVehicleId);
 
-        VehicleRequest newVehicle = vehicleRequest("Checkpoint Car", "CAR", "Created by API test", "2222.50", true);
-        HttpResponse<String> userCannotAdd = send("POST", "/api/vehicles", user.getToken(), newVehicle);
+        VehicleRequest newVehicle = vehicleRequest("Checkpoint Car", "CAR", "Created by V1 test", "2222.50", true);
+        HttpResponse<String> userCannotAdd = send("POST", "/v1/vehicles", user.getToken(), newVehicle);
         assertThat(userCannotAdd.statusCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
 
-        HttpResponse<String> addedResponse = send("POST", "/api/vehicles", admin.getToken(), newVehicle);
+        HttpResponse<String> addedResponse = send("POST", "/v1/vehicles", admin.getToken(), newVehicle);
         assertThat(addedResponse.statusCode()).isEqualTo(HttpStatus.CREATED.value());
         Vehicle added = read(addedResponse, Vehicle.class);
         assertThat(added.getName()).isEqualTo("Checkpoint Car");
         Long addedId = added.getId();
 
-        HttpResponse<String> carFilterResponse = send("GET", "/api/vehicles?type=CAR", user.getToken(), null);
+        HttpResponse<String> carFilterResponse = send("GET", "/v1/vehicles?type=CAR", user.getToken(), null);
         assertThat(carFilterResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
         Vehicle[] carFilter = read(carFilterResponse, Vehicle[].class);
         assertThat(carFilter).allMatch(vehicle -> vehicle.getType() == Vehicle.VehicleType.CAR);
 
-        HttpResponse<String> availableFilterResponse = send("GET", "/api/vehicles?available=true", user.getToken(), null);
+        HttpResponse<String> availableFilterResponse = send("GET", "/v1/vehicles?available=true", user.getToken(), null);
         assertThat(availableFilterResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
         Vehicle[] availableFilter = read(availableFilterResponse, Vehicle[].class);
         assertThat(availableFilter).allMatch(Vehicle::getIsAvailable);
 
-        VehicleRequest updatedVehicle = vehicleRequest("Checkpoint Bike", "BIKE", "Updated by API test", "900.00", false);
-        HttpResponse<String> updatedResponse = send("PUT", "/api/vehicles/" + addedId, admin.getToken(), updatedVehicle);
+        VehicleRequest updatedVehicle = vehicleRequest("Checkpoint Bike", "BIKE", "Updated by V1 test", "900.00", false);
+        HttpResponse<String> updatedResponse = send("PUT", "/v1/vehicles/" + addedId, admin.getToken(), updatedVehicle);
         assertThat(updatedResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
         Vehicle updated = read(updatedResponse, Vehicle.class);
         assertThat(updated.getName()).isEqualTo("Checkpoint Bike");
@@ -88,7 +88,7 @@ class VehicleRentalApplicationTests {
 
         HttpResponse<String> combinedFilterResponse = send(
                 "GET",
-                "/api/vehicles?type=BIKE&available=false",
+                "/v1/vehicles?type=BIKE&available=false",
                 user.getToken(),
                 null
         );
@@ -96,7 +96,7 @@ class VehicleRentalApplicationTests {
         Vehicle[] combinedFilter = read(combinedFilterResponse, Vehicle[].class);
         assertThat(combinedFilter).anyMatch(vehicle -> vehicle.getId().equals(addedId));
 
-        HttpResponse<String> deleted = send("DELETE", "/api/vehicles/" + addedId, admin.getToken(), null);
+        HttpResponse<String> deleted = send("DELETE", "/v1/vehicles/" + addedId, admin.getToken(), null);
         assertThat(deleted.statusCode()).isEqualTo(HttpStatus.OK.value());
         assertThat(deleted.body()).contains("Vehicle deleted successfully");
     }
@@ -108,7 +108,7 @@ class VehicleRentalApplicationTests {
         request.setPassword(password);
         request.setRole(role);
 
-        HttpResponse<String> response = send("POST", "/api/auth/register", null, request);
+        HttpResponse<String> response = send("POST", "/v1/auth/register", null, request);
 
         assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
         return authResponse(response);
@@ -119,7 +119,7 @@ class VehicleRentalApplicationTests {
         request.setEmail(email);
         request.setPassword(password);
 
-        HttpResponse<String> response = send("POST", "/api/auth/login", null, request);
+        HttpResponse<String> response = send("POST", "/v1/auth/login", null, request);
 
         assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
         return authResponse(response);
