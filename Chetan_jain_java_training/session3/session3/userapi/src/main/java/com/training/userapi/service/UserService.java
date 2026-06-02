@@ -1,87 +1,58 @@
-package com.training.userapi.controller;
+package com.training.userapi.service;
 
 import com.training.userapi.model.User;
-import com.training.userapi.service.UserService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import com.training.userapi.repository.UserRepository;
+import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-@RestController
+@Service
 public class UserService {
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    public UserService(UserService userService) {
-        this.userService = userService;
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
-    @GetMapping("/users/search")
-    public ResponseEntity<Object> searchUsers(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) Integer age,
-            @RequestParam(required = false) String role) {
-
-        List<User> result = userService.searchUsers(name, age, role);
-
-        Map<String, Object> response = new HashMap<>();
-
-        if (result.isEmpty()) {
-            response.put("message", "No users found matching the given criteria");
-            response.put("data", result);
-            response.put("count", 0);
-            return ResponseEntity.ok(response);
-        }
-
-        response.put("message", "Users fetched successfully");
-        response.put("data", result);
-        response.put("count", result.size());
-
-        return ResponseEntity.ok(response);
+    public List<User> searchUsers(String name, Integer age, String role) {
+        return userRepository.getAllUsers().stream()
+                .filter(user -> (name == null || user.getName().equalsIgnoreCase(name)))
+                .filter(user -> (age == null || user.getAge() == age))
+                .filter(user -> (role == null || user.getRole().equalsIgnoreCase(role)))
+                .collect(Collectors.toList());
     }
 
-    @PostMapping("/submit")
-    public ResponseEntity<Object> submitUser(@RequestBody User user) {
-
-        String result = userService.addUser(user);
-
-        Map<String, Object> response = new HashMap<>();
-
-        if (result.equals("SUCCESS")) {
-            response.put("message", "User added successfully");
-            response.put("status", "success");
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } else {
-            response.put("message", result);
-            response.put("status", "error");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    public String addUser(User user) {
+        if (user.getName() == null || user.getName().isEmpty()) {
+            return "Name cannot be empty";
         }
+        if (user.getAge() <= 0) {
+            return "Age must be greater than 0";
+        }
+        if (user.getRole() == null || user.getRole().isEmpty()) {
+            return "Role cannot be empty";
+        }
+
+        user.setId(userRepository.getNextId());
+        userRepository.addUser(user);
+        return "SUCCESS";
     }
 
-    @DeleteMapping("/users/{id}")
-    public ResponseEntity<Object> deleteUser(
-            @PathVariable int id,
-            @RequestParam(defaultValue = "false") boolean confirm) {
+    public String deleteUser(int id, boolean confirm) {
+        Optional<User> user = userRepository.findById(id);
 
-        String result = userService.deleteUser(id, confirm);
-
-        Map<String, Object> response = new HashMap<>();
-
-        if (result.equals("CONFIRMATION_REQUIRED")) {
-            response.put("message", "Confirmation required. Please add ?confirm=true to delete.");
-            response.put("status", "warning");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        } else if (result.equals("NOT_FOUND")) {
-            response.put("message", "User with ID " + id + " not found");
-            response.put("status", "error");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        } else {
-            response.put("message", "User with ID " + id + " deleted successfully");
-            response.put("status", "success");
-            return ResponseEntity.ok(response);
+        if (user.isEmpty()) {
+            return "NOT_FOUND";
         }
+
+        if (!confirm) {
+            return "CONFIRMATION_REQUIRED";
+        }
+
+        userRepository.deleteById(id);
+        return "SUCCESS";
     }
 }

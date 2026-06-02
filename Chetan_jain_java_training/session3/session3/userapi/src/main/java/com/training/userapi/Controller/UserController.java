@@ -1,5 +1,4 @@
-package com.training.userapi.Controller;
-package com.training.userapi.Controller;
+package com.training.userapi.controller;
 
 import com.training.userapi.model.User;
 import com.training.userapi.service.UserService;
