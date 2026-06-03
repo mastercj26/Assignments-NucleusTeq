@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controller for managing Todo tasks.
+ * Provides endpoints for CRUD operations on Todo items.
+ */
 @RestController
 @RequestMapping("/todos")
 public class TodoController {
