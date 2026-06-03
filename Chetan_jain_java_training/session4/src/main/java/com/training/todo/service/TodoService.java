@@ -4,22 +4,27 @@ import com.training.todo.dto.TodoDTO;
 import com.training.todo.model.Todo;
 import com.training.todo.model.TodoStatus;
 import com.training.todo.repository.TodoRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class TodoService {
 
+    private static final Logger logger = LoggerFactory.getLogger(TodoService.class);
     private final TodoRepository todoRepository;
+    private final NotificationServiceClient notificationServiceClient;
 
-    public TodoService(TodoRepository todoRepository) {
+    public TodoService(TodoRepository todoRepository, NotificationServiceClient notificationServiceClient) {
         this.todoRepository = todoRepository;
+        this.notificationServiceClient = notificationServiceClient;
     }
 
     public Todo createTodo(TodoDTO todoDTO) {
+        logger.info("Creating new todo with title: " + todoDTO.getTitle());
         Todo todo = new Todo();
         todo.setTitle(todoDTO.getTitle());
         todo.setDescription(todoDTO.getDescription());
@@ -31,28 +36,36 @@ public class TodoService {
         }
         
         todo.setCreatedAt(LocalDateTime.now());
-        return todoRepository.save(todo);
+        Todo savedTodo = todoRepository.save(todo);
+        
+        notificationServiceClient.sendNotification("Notification sent for new TODO: " + savedTodo.getTitle());
+        
+        return savedTodo;
     }
 
     public List<Todo> getAllTodos() {
+        logger.info("Fetching all todos");
         return todoRepository.findAll();
     }
 
     public Todo getTodoById(Long id) {
+        logger.info("Fetching todo with id: " + id);
         return todoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Todo not found with id: " + id));
+                .orElseThrow(() -> {
+                    logger.error("Todo not found with id: " + id);
+                    return new RuntimeException("Todo not found with id: " + id);
+                });
     }
 
     public Todo updateTodo(Long id, TodoDTO todoDTO) {
+        logger.info("Updating todo with id: " + id);
         Todo existingTodo = todoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Todo not found with id: " + id));
+                .orElseThrow(() -> {
+                    logger.error("Todo not found with id: " + id);
+                    return new RuntimeException("Todo not found with id: " + id);
+                });
 
-        // Status transition logic
         if (todoDTO.getStatus() != null && !existingTodo.getStatus().equals(todoDTO.getStatus())) {
-            // PENDING -> COMPLETED or COMPLETED -> PENDING are the only transitions
-            // Since there are only two, any change is a valid transition according to requirements
-            // (Wait, the requirements say "Allowed transitions: PENDING -> COMPLETED, COMPLETED -> PENDING")
-            // This means any change between these two is allowed.
             existingTodo.setStatus(todoDTO.getStatus());
         }
 
@@ -63,7 +76,9 @@ public class TodoService {
     }
 
     public void deleteTodo(Long id) {
+        logger.info("Deleting todo with id: " + id);
         if (!todoRepository.existsById(id)) {
+            logger.error("Todo not found with id: " + id);
             throw new RuntimeException("Todo not found with id: " + id);
         }
         todoRepository.deleteById(id);
