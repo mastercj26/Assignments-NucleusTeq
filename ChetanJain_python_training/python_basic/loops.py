@@ -20,7 +20,9 @@ def reverse_number(n: int) -> int:
     """Reverses a number using a loop."""
     reversed_num = 0
     temp = n
+    print(f"Reversing number: {n}")
     while temp > 0:
+
         digit = temp % 10
         reversed_num = reversed_num * 10 + digit
         temp //= 10
