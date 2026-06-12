@@ -2,7 +2,9 @@ import os
 
 def write_name_to_file(filename: str, name: str) -> None:
     """Creates a file and writes a name into it."""
+    print(f"Writing {name} to {filename}")
     with open(filename, 'w') as f:
+
         f.write(name)
 
 def analyze_file(filename: str) -> None:
