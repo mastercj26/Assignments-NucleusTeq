@@ -2,7 +2,9 @@
 Constants used across the project to avoid hardcoding values.
 """
 
+# These are some basic constants for the project
 WELCOME_MESSAGE = "Welcome to Python Training"
+
 DEFAULT_AGE = 0
 MIN_MARKS = 0
 MAX_MARKS = 100
