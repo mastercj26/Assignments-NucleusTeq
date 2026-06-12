@@ -1,4 +1,6 @@
+# custom error for bank balance
 class InsufficientBalanceError(Exception):
+
     """Custom exception for bank account errors."""
     def __init__(self, message="Balance is not enough for this operation"):
         self.message = message
