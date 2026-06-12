@@ -1,6 +1,7 @@
 # ChetanJain_python_training
 
-This repository contains my Python Fundamentals assignment for the NucleusTeq training.
+This repository contains my Python Fundamentals assignment for the NucleusTeq training. I have implemented all the basic and advanced tasks.
+
 
 ## Project Structure
 - `python_basic/`: Contains basic python programs, loops, functions, and file handling.
