@@ -1,4 +1,6 @@
+# simple class for student
 class Student:
+
     """Class representing a Student."""
     def __init__(self, name: str, roll_number: int):
         self.name = name
