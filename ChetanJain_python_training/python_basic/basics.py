@@ -43,7 +43,9 @@ def arithmetic_operations(a: float, b: float) -> None:
     else:
         print("Cannot divide by zero")
 
+# function to check if a number is even or odd
 def check_even_odd(num: int) -> str:
+
     """Checks if a number is even or odd."""
     if num % 2 == 0:
         return "Even"
