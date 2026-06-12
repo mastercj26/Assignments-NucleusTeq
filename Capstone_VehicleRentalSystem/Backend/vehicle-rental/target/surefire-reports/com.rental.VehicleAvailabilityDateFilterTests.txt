@@ -1,0 +1,11 @@
+-------------------------------------------------------------------------------
+Test set: com.rental.VehicleAvailabilityDateFilterTests
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 28.33 s <<< FAILURE! -- in com.rental.VehicleAvailabilityDateFilterTests
+com.rental.VehicleAvailabilityDateFilterTests.testAvailabilityFilterByDate -- Time elapsed: 5.214 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: 
+
+expected: 200
+ but was: 201
+	at com.rental.VehicleAvailabilityDateFilterTests.testAvailabilityFilterByDate(VehicleAvailabilityDateFilterTests.java:53)
+

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VehicleService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.rental.service</a> &gt; <span class="el_source">VehicleService.java</span></div><h1>VehicleService.java</h1><pre class="source lang-java linenums">package com.rental.service;
+
+import com.rental.dto.VehicleRequest;
+import com.rental.model.Booking;
+import com.rental.model.User;
+import com.rental.model.Vehicle;
+import com.rental.repository.BookingRepository;
+import com.rental.repository.VehicleRepository;
+import com.rental.exception.RentalException;
+import com.rental.exception.ResourceNotFoundException;
+import com.rental.exception.UnauthorizedAccessException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class VehicleService {
+
+    private final VehicleRepository vehicleRepository;
+    private final BookingRepository bookingRepository;
+    private final AuthService       authService;
+    public List&lt;Vehicle&gt; getVehicles(String type, Boolean available, LocalDate startDate, LocalDate endDate) {
+<span class="fc" id="L26">        User currentUser = authService.getCurrentUser();</span>
+<span class="fc" id="L27">        Vehicle.VehicleType vehicleType = parseType(type);</span>
+<span class="fc" id="L28">        Long ownerId = null;</span>
+
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        if (currentUser.getRole() == User.Role.VEHICLE_OWNER) {</span>
+<span class="fc" id="L31">            ownerId = currentUser.getId();</span>
+        }
+
+<span class="pc bpc" id="L34" title="3 of 4 branches missed.">        if (startDate != null &amp;&amp; endDate == null) startDate = null;</span>
+<span class="pc bpc" id="L35" title="3 of 4 branches missed.">        if (endDate != null &amp;&amp; startDate == null) endDate = null;</span>
+
+<span class="pc bpc" id="L37" title="5 of 6 branches missed.">        if (startDate != null &amp;&amp; endDate != null &amp;&amp; !endDate.isAfter(startDate)) {</span>
+<span class="nc" id="L38">            throw new RentalException(&quot;End date must be after start date&quot;);</span>
+        }
+
+
+<span class="fc" id="L42">        return vehicleRepository.findFiltered(</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">                vehicleType != null ? vehicleType.name() : null,</span>
+                available,
+                startDate,
+                endDate,
+                ownerId,
+<span class="fc" id="L48">                Booking.BookingStatus.CONFIRMED.name()</span>
+        );
+    }
+
+    public Vehicle getVehicleById(Long id) {
+<span class="fc" id="L53">        return vehicleRepository.findById(id)</span>
+<span class="fc" id="L54">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Vehicle not found with id: &quot; + id));</span>
+    }
+
+    public Vehicle addVehicle(VehicleRequest request) {
+<span class="fc" id="L58">        Vehicle vehicle = new Vehicle();</span>
+<span class="fc" id="L59">        applyRequest(vehicle, request);</span>
+<span class="fc" id="L60">        vehicle.setOwner(authService.getCurrentUser());</span>
+<span class="fc" id="L61">        return vehicleRepository.save(vehicle);</span>
+    }
+
+    public Vehicle updateVehicle(Long id, VehicleRequest request) {
+<span class="fc" id="L65">        Vehicle vehicle = getVehicleById(id);</span>
+<span class="fc" id="L66">        User currentUser = authService.getCurrentUser();</span>
+
+<span class="pc bpc" id="L68" title="1 of 4 branches missed.">        if (!vehicle.getOwner().getId().equals(currentUser.getId()) &amp;&amp; !currentUser.getRole().equals(User.Role.SUPERADMIN)) {</span>
+<span class="fc" id="L69">            throw new UnauthorizedAccessException(&quot;You are not authorized to update this vehicle&quot;);</span>
+        }
+
+<span class="fc" id="L72">        applyRequest(vehicle, request);</span>
+<span class="fc" id="L73">        return vehicleRepository.save(vehicle);</span>
+    }
+
+    public void deleteVehicle(Long id) {
+<span class="fc" id="L77">        Vehicle vehicle = getVehicleById(id);</span>
+<span class="fc" id="L78">        User currentUser = authService.getCurrentUser();</span>
+
+<span class="pc bpc" id="L80" title="3 of 4 branches missed.">        if (!vehicle.getOwner().getId().equals(currentUser.getId()) &amp;&amp; !currentUser.getRole().equals(User.Role.SUPERADMIN)) {</span>
+<span class="nc" id="L81">            throw new UnauthorizedAccessException(&quot;You are not authorized to delete this vehicle&quot;);</span>
+        }
+
+        // Restrict deletion of booked vehicles
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (bookingRepository.existsByVehicleIdAndStatus(id, Booking.BookingStatus.CONFIRMED)) {</span>
+<span class="fc" id="L86">            throw new RentalException(&quot;Cannot delete vehicle with active confirmed bookings&quot;);</span>
+        }
+
+<span class="fc" id="L89">        vehicleRepository.delete(vehicle);</span>
+<span class="fc" id="L90">    }</span>
+
+    private void applyRequest(Vehicle vehicle, VehicleRequest request) {
+<span class="fc" id="L93">        vehicle.setName(request.getName());</span>
+<span class="fc" id="L94">        vehicle.setType(parseRequiredType(request.getType()));</span>
+<span class="fc" id="L95">        vehicle.setDescription(request.getDescription());</span>
+<span class="fc" id="L96">        vehicle.setPricePerDay(request.getPricePerDay());</span>
+<span class="pc bpc" id="L97" title="1 of 2 branches missed.">        vehicle.setIsAvailable(request.getIsAvailable() != null ? request.getIsAvailable() : true);</span>
+<span class="fc" id="L98">    }</span>
+
+    private Vehicle.VehicleType parseType(String type) {
+<span class="pc bpc" id="L101" title="2 of 6 branches missed.">        if (type == null || type.isBlank() || &quot;ALL&quot;.equalsIgnoreCase(type)) {</span>
+<span class="fc" id="L102">            return null;</span>
+        }
+<span class="fc" id="L104">        return parseRequiredType(type);</span>
+    }
+
+    private Vehicle.VehicleType parseRequiredType(String type) {
+        try {
+<span class="fc" id="L109">            return Vehicle.VehicleType.valueOf(type.trim().toUpperCase());</span>
+<span class="fc" id="L110">        } catch (IllegalArgumentException | NullPointerException exception) {</span>
+<span class="fc" id="L111">            throw new RentalException(&quot;Vehicle type must be CAR or BIKE&quot;);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

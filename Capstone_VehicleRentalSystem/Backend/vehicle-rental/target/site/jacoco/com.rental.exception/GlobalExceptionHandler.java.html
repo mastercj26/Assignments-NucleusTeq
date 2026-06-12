@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.rental.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.rental.exception;
+
+import com.rental.dto.ErrorResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+
+@RestControllerAdvice
+<span class="fc" id="L13">public class GlobalExceptionHandler {</span>
+
+<span class="fc" id="L15">    private Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);</span>
+
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleResourceNotFound(ResourceNotFoundException exception) {
+<span class="fc" id="L20">        logger.warn(&quot;Resource not found: {}&quot;, exception.getMessage());</span>
+<span class="fc" id="L21">        ErrorResponse error = new ErrorResponse(</span>
+<span class="fc" id="L22">                HttpStatus.NOT_FOUND.value(),</span>
+<span class="fc" id="L23">                exception.getMessage()</span>
+        );
+<span class="fc" id="L25">        return new ResponseEntity&lt;&gt;(error, HttpStatus.NOT_FOUND);</span>
+    }
+
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleUnauthorized(UnauthorizedAccessException exception) {
+<span class="fc" id="L30">        logger.warn(&quot;Unauthorized access attempt: {}&quot;, exception.getMessage());</span>
+<span class="fc" id="L31">        ErrorResponse error = new ErrorResponse(</span>
+<span class="fc" id="L32">                HttpStatus.FORBIDDEN.value(),</span>
+<span class="fc" id="L33">                exception.getMessage()</span>
+        );
+<span class="fc" id="L35">        return new ResponseEntity&lt;&gt;(error, HttpStatus.FORBIDDEN);</span>
+    }
+
+    //  Handle General Rental/Business Logic Errors
+    @ExceptionHandler(RentalException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleRentalException(RentalException exception) {
+<span class="fc" id="L41">        logger.error(&quot;Business logic error: {}&quot;, exception.getMessage());</span>
+<span class="fc" id="L42">        ErrorResponse error = new ErrorResponse(</span>
+<span class="fc" id="L43">                HttpStatus.BAD_REQUEST.value(),</span>
+<span class="fc" id="L44">                exception.getMessage()</span>
+        );
+<span class="fc" id="L46">        return new ResponseEntity&lt;&gt;(error, HttpStatus.BAD_REQUEST);</span>
+    }
+
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleAccessDenied(org.springframework.security.access.AccessDeniedException exception) {
+<span class="fc" id="L52">        logger.warn(&quot;Access denied: {}&quot;, exception.getMessage());</span>
+<span class="fc" id="L53">        ErrorResponse error = new ErrorResponse(</span>
+<span class="fc" id="L54">                HttpStatus.FORBIDDEN.value(),</span>
+                &quot;Access denied. You don't have permission to perform this action.&quot;
+        );
+<span class="fc" id="L57">        return new ResponseEntity&lt;&gt;(error, HttpStatus.FORBIDDEN);</span>
+    }
+
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleGlobalException(Exception exception) {
+<span class="fc" id="L63">        logger.error(&quot;Unexpected error occurred&quot;, exception);</span>
+<span class="fc" id="L64">        ErrorResponse error = new ErrorResponse(</span>
+<span class="fc" id="L65">                HttpStatus.INTERNAL_SERVER_ERROR.value(),</span>
+<span class="fc" id="L66">                &quot;An unexpected error occurred: &quot; + exception.getMessage()</span>
+        );
+<span class="fc" id="L68">        return new ResponseEntity&lt;&gt;(error, HttpStatus.INTERNAL_SERVER_ERROR);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

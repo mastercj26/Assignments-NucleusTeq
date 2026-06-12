@@ -1,0 +1,5 @@
+com\rental\service\BookingServiceTest.class
+com\rental\VehicleOwnershipTests.class
+com\rental\controller\BookingControllerTest.class
+com\rental\service\VehicleServiceTest.class
+com\rental\VehicleRentalApplicationTests.class

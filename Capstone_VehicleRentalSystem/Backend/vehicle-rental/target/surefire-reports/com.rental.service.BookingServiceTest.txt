@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.rental.service.BookingServiceTest
+-------------------------------------------------------------------------------
+Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.009 s -- in com.rental.service.BookingServiceTest

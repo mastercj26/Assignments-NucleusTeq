@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.rental.service</a> &gt; <span class="el_source">AuthService.java</span></div><h1>AuthService.java</h1><pre class="source lang-java linenums">package com.rental.service;
+
+import com.rental.dto.*;
+import com.rental.model.User;
+import com.rental.repository.UserRepository;
+import com.rental.security.JwtUtil;
+import com.rental.exception.RentalException;
+import com.rental.exception.ResourceNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class AuthService {
+
+<span class="fc" id="L20">    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);</span>
+
+    private final UserRepository     userRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final JwtUtil            jwtUtil;
+
+
+    public AuthResponse register(RegisterRequest req) {
+<span class="fc" id="L28">        logger.info(&quot;Starting registration for user: {}&quot;, req.getEmail());</span>
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">        if (userRepository.existsByEmail(req.getEmail())) {</span>
+<span class="nc" id="L30">            logger.error(&quot;Registration failed: Email {} already exists&quot;, req.getEmail());</span>
+<span class="nc" id="L31">            throw new RentalException(&quot;Email already in use&quot;);</span>
+        }
+
+<span class="fc" id="L34">        User user = new User();</span>
+<span class="fc" id="L35">        user.setUsername(req.getUsername());</span>
+<span class="fc" id="L36">        user.setEmail(req.getEmail());</span>
+<span class="fc" id="L37">        user.setPassword(passwordEncoder.encode(req.getPassword()));</span>
+
+<span class="pc bpc" id="L39" title="1 of 4 branches missed.">        if (req.getRole() != null &amp;&amp; req.getRole().equalsIgnoreCase(&quot;VEHICLE_OWNER&quot;)) {</span>
+<span class="fc" id="L40">            user.setRole(User.Role.VEHICLE_OWNER);</span>
+        } else {
+<span class="fc" id="L42">            user.setRole(User.Role.USER);</span>
+        }
+
+<span class="fc" id="L45">        userRepository.save(user); // saves to PostgreSQL</span>
+<span class="fc" id="L46">        logger.info(&quot;User {} registered successfully with role {}&quot;, user.getEmail(), user.getRole());</span>
+
+<span class="fc" id="L48">        String token = jwtUtil.generateToken(</span>
+<span class="fc" id="L49">                user.getEmail(), user.getRole().name());</span>
+<span class="fc" id="L50">        return new AuthResponse(</span>
+<span class="fc" id="L51">                token, user.getRole().name(), user.getUsername());</span>
+    }
+
+
+    public AuthResponse login(LoginRequest req) {
+<span class="fc" id="L56">        logger.info(&quot;Attempting login for user: {}&quot;, req.getEmail());</span>
+<span class="fc" id="L57">        User user = userRepository.findByEmail(req.getEmail())</span>
+<span class="fc" id="L58">                .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L59">                    logger.error(&quot;Login failed: User {} not found&quot;, req.getEmail());</span>
+<span class="fc" id="L60">                    return new ResourceNotFoundException(&quot;User not found with email: &quot; + req.getEmail());</span>
+                });
+
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {</span>
+<span class="nc" id="L64">            logger.error(&quot;Login failed: Invalid password for user {}&quot;, req.getEmail());</span>
+<span class="nc" id="L65">            throw new RentalException(&quot;Invalid password&quot;);</span>
+        }
+
+<span class="fc" id="L68">        logger.info(&quot;User {} logged in successfully&quot;, req.getEmail());</span>
+<span class="fc" id="L69">        String token = jwtUtil.generateToken(</span>
+<span class="fc" id="L70">                user.getEmail(), user.getRole().name());</span>
+<span class="fc" id="L71">        return new AuthResponse(</span>
+<span class="fc" id="L72">                token, user.getRole().name(), user.getUsername());</span>
+    }
+
+
+    public User getCurrentUser() {
+        String email = SecurityContextHolder
+<span class="fc" id="L78">                .getContext()</span>
+<span class="fc" id="L79">                .getAuthentication()</span>
+<span class="fc" id="L80">                .getName();</span>
+
+<span class="fc" id="L82">        return userRepository.findByEmail(email)</span>
+<span class="pc" id="L83">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Logged in user session not found&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.rental.service</a> &gt; <span class="el_source">BookingService.java</span></div><h1>BookingService.java</h1><pre class="source lang-java linenums">package com.rental.service;
+
+import com.rental.dto.BookingRequest;
+import com.rental.dto.BookingResponse;
+import com.rental.model.Booking;
+import com.rental.model.User;
+import com.rental.model.Vehicle;
+import com.rental.repository.BookingRepository;
+import com.rental.repository.VehicleRepository;
+import com.rental.exception.RentalException;
+import com.rental.exception.ResourceNotFoundException;
+import com.rental.exception.UnauthorizedAccessException;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class BookingService {
+
+<span class="fc" id="L29">    private static final Logger logger = LoggerFactory.getLogger(BookingService.class);</span>
+
+    private final BookingRepository bookingRepository;
+    private final VehicleRepository vehicleRepository;
+    private final AuthService       authService;
+
+    @Transactional
+    public BookingResponse createBooking(BookingRequest request) {
+<span class="fc" id="L37">        User user = authService.getCurrentUser();</span>
+<span class="fc" id="L38">        logger.info(&quot;User {} is creating a booking for vehicle id {}&quot;, user.getEmail(), request.getVehicleId());</span>
+
+<span class="fc" id="L40">        Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())</span>
+<span class="fc" id="L41">                .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L42">                    logger.error(&quot;Booking failed: Vehicle id {} not found&quot;, request.getVehicleId());</span>
+<span class="fc" id="L43">                    return new ResourceNotFoundException(&quot;Vehicle not found with id: &quot; + request.getVehicleId());</span>
+                });
+
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        if (!vehicle.getIsAvailable()) {</span>
+<span class="fc" id="L47">            logger.warn(&quot;Booking failed: Vehicle {} is not available&quot;, vehicle.getName());</span>
+<span class="fc" id="L48">            throw new RentalException(&quot;Vehicle is currently not available for rent&quot;);</span>
+        }
+
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        if (request.getEndDate().isBefore(request.getStartDate())) {</span>
+<span class="fc" id="L52">            logger.warn(&quot;Booking failed: Invalid dates - start: {}, end: {}&quot;, request.getStartDate(), request.getEndDate());</span>
+<span class="fc" id="L53">            throw new RentalException(&quot;End date cannot be before start date&quot;);</span>
+        }
+
+        // --- Overlap Validation Logic (CRITICAL) ---
+<span class="fc" id="L57">        List&lt;Booking&gt; overlapping = bookingRepository.findOverlappingBookings(</span>
+<span class="fc" id="L58">                vehicle.getId(), request.getStartDate(), request.getEndDate(), Booking.BookingStatus.CONFIRMED</span>
+        );
+
+<span class="fc bfc" id="L61" title="All 2 branches covered.">        if (!overlapping.isEmpty()) {</span>
+<span class="fc" id="L62">            logger.warn(&quot;Booking failed: Vehicle {} has overlapping bookings for selected dates&quot;, vehicle.getName());</span>
+<span class="fc" id="L63">            throw new RentalException(&quot;Vehicle is already booked for the selected dates&quot;);</span>
+        }
+
+        // Calculate Total Price
+
+<span class="fc" id="L68">        long days = ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate());</span>
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        if (days &lt;= 0) days = 1; // Minimum 1 day charge</span>
+<span class="fc" id="L70">        BigDecimal total = vehicle.getPricePerDay().multiply(BigDecimal.valueOf(days));</span>
+
+<span class="fc" id="L72">        Booking booking = new Booking();</span>
+<span class="fc" id="L73">        booking.setUser(user);</span>
+<span class="fc" id="L74">        booking.setVehicle(vehicle);</span>
+<span class="fc" id="L75">        booking.setStartDate(request.getStartDate());</span>
+<span class="fc" id="L76">        booking.setEndDate(request.getEndDate());</span>
+<span class="fc" id="L77">        booking.setTotalPrice(total);</span>
+<span class="fc" id="L78">        booking.setStatus(Booking.BookingStatus.CONFIRMED);</span>
+
+<span class="fc" id="L80">        Booking savedBooking = bookingRepository.save(booking);</span>
+<span class="fc" id="L81">        logger.info(&quot;Booking created successfully with id: {}&quot;, savedBooking.getId());</span>
+<span class="fc" id="L82">        return BookingResponse.fromEntity(savedBooking);</span>
+    }
+
+    public List&lt;BookingResponse&gt; getMyBookingHistory() {
+<span class="fc" id="L86">        User user = authService.getCurrentUser();</span>
+<span class="fc" id="L87">        return bookingRepository.findByUserId(user.getId())</span>
+<span class="fc" id="L88">                .stream()</span>
+<span class="fc" id="L89">                .map(BookingResponse::fromEntity)</span>
+<span class="fc" id="L90">                .collect(Collectors.toList());</span>
+    }
+
+    public List&lt;BookingResponse&gt; getAllBookings() {
+<span class="fc" id="L94">        User currentUser = authService.getCurrentUser();</span>
+        List&lt;Booking&gt; bookings;
+
+<span class="fc bfc" id="L97" title="All 2 branches covered.">        if (currentUser.getRole() == User.Role.VEHICLE_OWNER) {</span>
+<span class="fc" id="L98">            bookings = bookingRepository.findByVehicleOwnerId(currentUser.getId());</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">        } else if (currentUser.getRole() == User.Role.SUPERADMIN) {</span>
+<span class="fc" id="L100">            bookings = bookingRepository.findAll();</span>
+        } else {
+            // Regular users shouldn't really be calling getAllBookings (it's protected by PreAuthorize)
+            // but for safety, return empty or their own history
+<span class="fc" id="L104">            return getMyBookingHistory();</span>
+        }
+
+<span class="fc" id="L107">        return bookings.stream()</span>
+<span class="fc" id="L108">                .map(BookingResponse::fromEntity)</span>
+<span class="fc" id="L109">                .collect(Collectors.toList());</span>
+    }
+
+    @Transactional
+    public void cancelBooking(Long bookingId) {
+<span class="fc" id="L114">        User user = authService.getCurrentUser();</span>
+<span class="fc" id="L115">        Booking booking = bookingRepository.findById(bookingId)</span>
+<span class="fc" id="L116">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Booking not found with id: &quot; + bookingId));</span>
+
+        // Check if user is owner or VEHICLE_OWNER
+<span class="pc bpc" id="L119" title="1 of 4 branches missed.">        if (!booking.getUser().getId().equals(user.getId()) &amp;&amp; !user.getRole().equals(User.Role.VEHICLE_OWNER)) {</span>
+<span class="fc" id="L120">            throw new UnauthorizedAccessException(&quot;Unauthorized to cancel this booking&quot;);</span>
+        }
+
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        if (booking.getStatus() == Booking.BookingStatus.CANCELLED) {</span>
+<span class="fc" id="L124">            throw new RentalException(&quot;Booking is already cancelled&quot;);</span>
+        }
+
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (booking.getStartDate().isBefore(LocalDate.now())) {</span>
+<span class="fc" id="L128">            throw new RentalException(&quot;Cannot cancel a booking that has already started&quot;);</span>
+        }
+
+<span class="fc" id="L131">        booking.setStatus(Booking.BookingStatus.CANCELLED);</span>
+<span class="fc" id="L132">        bookingRepository.save(booking);</span>
+<span class="fc" id="L133">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

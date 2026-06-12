@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RentalBookingResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.rental.dto</a> &gt; <span class="el_source">RentalBookingResponse.java</span></div><h1>RentalBookingResponse.java</h1><pre class="source lang-java linenums">package com.rental.dto;
+
+import com.rental.model.RentalBooking;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class RentalBookingResponse {
+    private Long id;
+    private String username;
+    private String vehicleName;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private BigDecimal totalPrice;
+    private String status;
+
+    public static RentalBookingResponse fromEntity(RentalBooking rentalBooking) {
+<span class="nc" id="L24">        return new RentalBookingResponse(</span>
+<span class="nc" id="L25">                rentalBooking.getId(),</span>
+<span class="nc" id="L26">                rentalBooking.getUser().getUsername(),</span>
+<span class="nc" id="L27">                rentalBooking.getVehicle().getName(),</span>
+<span class="nc" id="L28">                rentalBooking.getStartDate(),</span>
+<span class="nc" id="L29">                rentalBooking.getEndDate(),</span>
+<span class="nc" id="L30">                rentalBooking.getTotalPrice(),</span>
+<span class="nc" id="L31">                rentalBooking.getStatus().name()</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
