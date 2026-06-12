@@ -1,7 +1,9 @@
 import math
 import random
 
+# simple function to square a number
 def calculate_square(n: float) -> float:
+
     """Calculates square of a number."""
     return n * n
 
