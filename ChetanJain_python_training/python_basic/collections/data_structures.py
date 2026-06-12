@@ -1,4 +1,6 @@
+# doing some operations on list
 def list_operations() -> None:
+
     """Performs various operations on a list of 10 numbers."""
     numbers = [10, 20, 5, 45, 99, 10, 20, 7, 8, 15]
     
