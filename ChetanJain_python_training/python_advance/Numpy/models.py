@@ -20,11 +20,11 @@ class NumpyArrayAnalyzer:
         self.numpy_array: NDArray[np.int_] = np.array(raw_data)
 
     def compute_mean(self) -> float:
-        """Return the mean of the array."""
+
         return float(np.mean(self.numpy_array))
 
     def compute_max(self) -> int:
-        """Return the maximum value in the array."""
+
         return int(np.max(self.numpy_array))
 
     def compute_min(self) -> int:
@@ -96,15 +96,15 @@ class NumpyMatrixCreator:
 
 def run_numpy_basics_demo() -> None:
     """Run all NumPy basic demonstrations."""
-    print("===== NumPy Array Statistics =====")
+
     array_analyzer = NumpyArrayAnalyzer(SAMPLE_ARRAY)
     array_analyzer.display_statistics()
 
-    print("\n===== NumPy Array Arithmetic =====")
+
     array_arithmetic = NumpyArrayArithmetic(ARRAY_ONE, ARRAY_TWO)
     array_arithmetic.display_arithmetic_results()
 
-    print("\n===== NumPy 3x3 Matrix =====")
+
     matrix_creator = NumpyMatrixCreator(
         MATRIX_ROWS, MATRIX_COLS, MATRIX_START_VALUE, MATRIX_END_VALUE
     )
