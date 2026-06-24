@@ -1,11 +1,4 @@
-"""
-Pytest test cases.
 
-Covers:
-    - add_numbers() function
-    - is_prime_number() function
-    - pdb debugging demonstration
-"""
 
 import pytest
 from python_advance.oop.packaging_demo.math_operations import add_numbers

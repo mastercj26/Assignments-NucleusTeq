@@ -1,4 +1,4 @@
-# simple class for student
+
 class Student:
 
     """Class representing a Student."""

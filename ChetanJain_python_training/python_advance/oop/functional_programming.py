@@ -7,11 +7,7 @@ square_lambda: Callable[[int], int] = lambda number: number ** 2
 
 
 def compute_squares_with_map(number_list: list[int]) -> list[int]:
-    """
-    Use map() to compute squares of all numbers in number_list.
 
-    Time Complexity: O(n)
-    """
     return list(map(lambda number: number ** 2, number_list))
 
 
