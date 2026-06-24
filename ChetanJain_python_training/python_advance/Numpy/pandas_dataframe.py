@@ -69,15 +69,15 @@ def run_pandas_dataframe_demo() -> None:
         EMPLOYEE_SALARIES,
     )
 
-    print("===== First 2 Rows =====")
+
     print(employee_df.get_first_n_rows(2))
 
-    print("\n===== Summary Statistics =====")
+
     print(employee_df.get_summary_statistics())
 
-    print(f"\n===== {IT_DEPARTMENT_LABEL} Employees =====")
+
     print(employee_df.filter_by_department(IT_DEPARTMENT_LABEL))
 
     employee_df.add_bonus_column(BONUS_RATE)
-    print("\n===== DataFrame with Bonus Column =====")
+
     employee_df.display_all()
