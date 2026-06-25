@@ -1,0 +1,7 @@
+USER_NOT_FOUND = "User not found"
+INVALID_CREDENTIALS = "Invalid email or password"
+FIRST_LOGIN_REQUIRED = "Please reset your password before proceeding"
+PASSWORD_RESET_SUCCESS = "Password reset successfully"
+USER_CREATED = "User created successfully"
+EMAIL_ALREADY_EXISTS = "Email already exists"
+DOMAIN_RESTRICTION = "Email must be from nucleusteq.com domain"
