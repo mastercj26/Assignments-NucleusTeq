@@ -26,7 +26,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Token expired or invalid – clear storage and redirect to login
+      
       localStorage.clear();
       window.location.href = '/login';
     }

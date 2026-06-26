@@ -2,7 +2,20 @@ from src.core.database import Database
 from src.exceptions.custom_exceptions import DuplicateException, NotFoundException
 from src.constants.user_constants import EMAIL_ALREADY_EXISTS, USER_NOT_FOUND
 from bson import ObjectId
+from datetime import datetime
 
+@staticmethod
+def create_user(user_data: dict):
+    # Check if email already exists
+    existing = UserRepository.collection.find_one({"email": user_data["email"]})
+    if existing:
+        raise DuplicateException(EMAIL_ALREADY_EXISTS)
+    # Add timestamps
+    user_data["created_at"] = datetime.utcnow().isoformat()
+    user_data["updated_at"] = datetime.utcnow().isoformat()
+    result = UserRepository.collection.insert_one(user_data)
+    user_data["_id"] = str(result.inserted_id)
+    return user_data
 class UserRepository:
     collection = Database.get_collection("users")
 

@@ -12,6 +12,7 @@ const Sidebar = () => {
         <li><Link to="/interviews">Interviews</Link></li>
         <li><Link to="/users">Users</Link></li>
         <li><Link to="/login">Login</Link></li>
+        <li><Link to="/change-password">Change Password</Link></li>
       </ul>
     </div>
   );

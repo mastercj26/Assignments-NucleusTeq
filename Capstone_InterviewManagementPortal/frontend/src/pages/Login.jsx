@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
+import { getErrorMessage } from '../utils/errorHandler';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -11,27 +12,28 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    const trimmedEmail = email.trim();
+    // Basic validation
+    if (!trimmedEmail || !trimmedEmail.includes('@')) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth/login', { email: trimmedEmail, password });
       const { access_token, user_id, email: userEmail, role } = response.data;
-      // Store token and user info
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('user_id', user_id);
       localStorage.setItem('user_email', userEmail);
       localStorage.setItem('user_role', role);
-      // Redirect to dashboard
       navigate('/dashboard');
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.detail) {
-        const detail = err.response.data.detail;
-        // If the backend says "Please reset your password", redirect
-        if (detail.toLowerCase().includes('reset your password')) {
-          navigate('/reset-password', { state: { email } });
-        } else {
-          setError(detail);
-        }
+      const errorMessage = getErrorMessage(err);
+      if (errorMessage.toLowerCase().includes('reset your password')) {
+        navigate('/reset-password', { state: { email: trimmedEmail } });
       } else {
-        setError('An unexpected error occurred');
+        setError(errorMessage);
       }
     }
   };
@@ -46,7 +48,7 @@ const Login = () => {
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}  // we trim inside handleSubmit
             required
             style={{ width: '100%', padding: '8px', margin: '8px 0' }}
           />
