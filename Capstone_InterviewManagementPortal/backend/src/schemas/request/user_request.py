@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, validator
-from src.enums.user_enums import UserRole
+from typing import Optional
+from src.enums.user_enums import UserRole, UserStatus
 import re
 
 class CreateUserRequest(BaseModel):
@@ -7,7 +8,7 @@ class CreateUserRequest(BaseModel):
     password: str = Field(..., min_length=6, max_length=12)
     first_name: str = Field(..., min_length=1, max_length=50)
     last_name: str = Field(..., min_length=1, max_length=50)
-    role: UserRole  # Must be one of "admin", "hr", "interviewer"
+    role: UserRole
 
     @validator('email')
     def validate_nucleusteq_domain(cls, v):
@@ -20,3 +21,9 @@ class CreateUserRequest(BaseModel):
         if not re.match(r'^[A-Za-z0-9@#$%^&+=!]{6,12}$', v):
             raise ValueError('Password must be 6-12 chars and contain alphanumeric or special characters')
         return v
+
+class UpdateUserRequest(BaseModel):
+    first_name: Optional[str] = Field(None, min_length=1, max_length=50)
+    last_name: Optional[str] = Field(None, min_length=1, max_length=50)
+    role: Optional[UserRole] = None
+    status: Optional[UserStatus] = None

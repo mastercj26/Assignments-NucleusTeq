@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 from src.enums.user_enums import UserRole, UserStatus
 
 class UserResponse(BaseModel):
@@ -9,4 +10,11 @@ class UserResponse(BaseModel):
     role: UserRole
     status: UserStatus
     is_first_login: bool
-    created_at: str  # ISO format
+    created_at: str
+
+class UserListResponse(BaseModel):
+    users: List[UserResponse]
+    total: int
+    page: int
+    per_page: int
+    pages: int

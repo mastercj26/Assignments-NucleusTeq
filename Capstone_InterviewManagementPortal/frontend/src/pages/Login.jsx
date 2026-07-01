@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // <-- import Link
 import api from '../api/axiosConfig';
 import { getErrorMessage } from '../utils/errorHandler';
 
@@ -14,7 +14,6 @@ const Login = () => {
     setError('');
 
     const trimmedEmail = email.trim();
-    // Basic validation
     if (!trimmedEmail || !trimmedEmail.includes('@')) {
       setError('Please enter a valid email address.');
       return;
@@ -31,6 +30,7 @@ const Login = () => {
     } catch (err) {
       const errorMessage = getErrorMessage(err);
       if (errorMessage.toLowerCase().includes('reset your password')) {
+        localStorage.setItem('reset_email', trimmedEmail);
         navigate('/reset-password', { state: { email: trimmedEmail } });
       } else {
         setError(errorMessage);
@@ -39,7 +39,7 @@ const Login = () => {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px', border: '1px solid #ccc' }}>
+    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
       <h2>Login</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
@@ -48,7 +48,7 @@ const Login = () => {
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}  // we trim inside handleSubmit
+            onChange={(e) => setEmail(e.target.value)}
             required
             style={{ width: '100%', padding: '8px', margin: '8px 0' }}
           />
@@ -63,10 +63,41 @@ const Login = () => {
             style={{ width: '100%', padding: '8px', margin: '8px 0' }}
           />
         </div>
-        <button type="submit" style={{ padding: '10px 20px', background: '#007bff', color: '#fff', border: 'none' }}>
+        <button 
+          type="submit" 
+          style={{ 
+            width: '100%', 
+            padding: '10px', 
+            background: '#007bff', 
+            color: '#fff', 
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
           Login
         </button>
       </form>
+
+      {/* ====== NEW: Create User Link ====== */}
+      <div style={{ marginTop: '20px', textAlign: 'center', borderTop: '1px solid #ddd', paddingTop: '15px' }}>
+        <p style={{ margin: 0, fontSize: '14px' }}>
+          Don't have an account?{' '}
+          <Link 
+            to="/users/create" 
+            style={{ 
+              color: '#28a745', 
+              textDecoration: 'underline',
+              fontWeight: 'bold'
+            }}
+          >
+            Create User
+          </Link>
+        </p>
+        <p style={{ margin: '5px 0 0', fontSize: '12px', color: '#888' }}>
+          (Admin users can create new users from here)
+        </p>
+      </div>
     </div>
   );
 };
