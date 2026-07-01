@@ -8,6 +8,10 @@ import ChangePassword from './pages/ChangePassword';
 import Users from './pages/Users';
 import CreateUser from './pages/CreateUser';
 import EditUser from './pages/EditUser';
+import Jobs from './pages/Jobs';
+import CreateJob from './pages/CreateJob';
+import EditJob from './pages/EditJob';
+import JobDetails from './pages/JobDetails';
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('access_token');
   if (!token) {
@@ -50,6 +54,7 @@ function App() {
     <MainLayout><EditUser /></MainLayout>
   </ProtectedRoute>
 } />
+
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <MainLayout><Dashboard /></MainLayout>
