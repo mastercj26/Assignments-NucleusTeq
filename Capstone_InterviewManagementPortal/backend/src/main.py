@@ -4,7 +4,7 @@ from src.core.database import Database
 from src.exceptions.exception_handlers import register_exception_handlers
 from src.routers.auth_router import router as auth_router
 import logging
-from src.routers import user_router 
+from src.routers import auth_router, user_router, job_router
 from src.utils.logger import setup_logger
 logger = setup_logger(__name__)
 app = FastAPI(
@@ -46,4 +46,6 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "OK"}
-app.include_router(user_router.router)
+app.include_router(auth_router)
+app.include_router(user_router)
+app.include_router(job_router)
