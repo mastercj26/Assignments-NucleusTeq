@@ -1,0 +1,140 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { jobApi } from '../api/jobApi';
+import { getErrorMessage } from '../utils/errorHandler';
+
+const EditJob = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [form, setForm] = useState(null);
+  const [skillsInput, setSkillsInput] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const employmentTypes = ['Full Time', 'Internship'];
+  const statuses = ['open', 'closed', 'draft'];
+
+  useEffect(() => {
+    const fetchJob = async () => {
+      try {
+        const res = await jobApi.get(id);
+        setForm(res.data);
+      } catch (err) {
+        setError(getErrorMessage(err));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJob();
+  }, [id]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
+  const addSkill = () => {
+    if (skillsInput.trim() && !form.required_skills.includes(skillsInput.trim())) {
+      setForm({ ...form, required_skills: [...form.required_skills, skillsInput.trim()] });
+      setSkillsInput('');
+    }
+  };
+
+  const removeSkill = (skill) => {
+    setForm({ ...form, required_skills: form.required_skills.filter(s => s !== skill) });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (form.required_skills.length === 0) {
+      setError('At least one skill is required.');
+      return;
+    }
+    setError('');
+    setSuccess(false);
+    try {
+      await jobApi.update(id, form);
+      setSuccess(true);
+      setTimeout(() => navigate('/jobs'), 1500);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  };
+
+  if (loading) return <p>Loading job...</p>;
+  if (error && !form) return <p style={{ color: 'red' }}>{error}</p>;
+
+  return (
+    <div style={{ maxWidth: '600px', margin: '20px auto' }}>
+      <h2>Edit Job Description</h2>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {success && <p style={{ color: 'green' }}>Job updated successfully!</p>}
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Job Title</label>
+          <input name="job_title" value={form.job_title} onChange={handleChange} required style={{ width: '100%', padding: '8px' }} />
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <label>Job Details</label>
+          <textarea name="job_details" value={form.job_details} onChange={handleChange} required rows="4" style={{ width: '100%', padding: '8px' }} />
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <label>Job Role</label>
+          <input name="job_role" value={form.job_role} onChange={handleChange} required style={{ width: '100%', padding: '8px' }} />
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <label>Required Skills</label>
+          <div style={{ display: 'flex' }}>
+            <input
+              type="text"
+              value={skillsInput}
+              onChange={(e) => setSkillsInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+              style={{ flex: 1, padding: '8px' }}
+              placeholder="Type skill and press Enter"
+            />
+            <button type="button" onClick={addSkill} style={{ padding: '8px 16px' }}>Add</button>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+            {form.required_skills.map(skill => (
+              <span key={skill} style={{ background: '#e0e0e0', padding: '4px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center' }}>
+                {skill}
+                <button type="button" onClick={() => removeSkill(skill)} style={{ marginLeft: '8px', background: 'transparent', border: 'none', cursor: 'pointer' }}>✕</button>
+              </span>
+            ))}
+          </div>
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <label>Experience Required (years)</label>
+          <input name="experience_required" type="number" value={form.experience_required} onChange={handleChange} min="0" style={{ width: '100%', padding: '8px' }} />
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <label>Employment Type</label>
+          <select name="employment_type" value={form.employment_type} onChange={handleChange} style={{ width: '100%', padding: '8px' }}>
+            {employmentTypes.map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <label>Location</label>
+          <input name="location" value={form.location} onChange={handleChange} required style={{ width: '100%', padding: '8px' }} />
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <label>Status</label>
+          <select name="status" value={form.status} onChange={handleChange} style={{ width: '100%', padding: '8px' }}>
+            {statuses.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" style={{ marginTop: '20px', padding: '10px 20px' }}>
+          Update Job
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default EditJob;

@@ -4,8 +4,10 @@ import MainLayout from './components/Layout/MainLayout';
 import Login from './pages/Login';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
-
-// Protected route wrapper
+import ChangePassword from './pages/ChangePassword';
+import Users from './pages/Users';
+import CreateUser from './pages/CreateUser';
+import EditUser from './pages/EditUser';
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('access_token');
   if (!token) {
@@ -28,12 +30,32 @@ function App() {
             <MainLayout><Dashboard /></MainLayout>
           </ProtectedRoute>
         } />
+        <Route path="/change-password" element={
+  <ProtectedRoute>
+    <MainLayout><ChangePassword /></MainLayout>
+  </ProtectedRoute>
+} />
+<Route path="/users" element={
+  <ProtectedRoute>
+    <MainLayout><Users /></MainLayout>
+  </ProtectedRoute>
+} />
+<Route path="/users/create" element={
+  <ProtectedRoute>
+    <MainLayout><CreateUser /></MainLayout>
+  </ProtectedRoute>
+} />
+<Route path="/users/edit/:id" element={
+  <ProtectedRoute>
+    <MainLayout><EditUser /></MainLayout>
+  </ProtectedRoute>
+} />
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <MainLayout><Dashboard /></MainLayout>
           </ProtectedRoute>
         } />
-        {/* Add more protected routes later (users, jobs, candidates, etc.) */}
+      
       </Routes>
     </Router>
   );
