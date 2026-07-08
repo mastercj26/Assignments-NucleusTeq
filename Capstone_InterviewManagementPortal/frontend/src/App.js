@@ -24,11 +24,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public routes */}
+        
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         
-        {/* Protected routes (with sidebar layout) */}
         <Route path="/" element={
           <ProtectedRoute>
             <MainLayout><Dashboard /></MainLayout>
