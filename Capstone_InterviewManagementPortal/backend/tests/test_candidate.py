@@ -2,10 +2,21 @@ import pytest
 from fastapi.testclient import TestClient
 from src.main import app
 from src.core.database import Database
-from src.core.security import hash_password, create_access_token
+from src.core.security import hash_password
 from src.enums.user_enums import UserRole, UserStatus
 
 client = TestClient(app)
+
+# Test data
+CANDIDATE_DATA = {
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john@nucleusteq.com",
+    "mobile_number": "1234567890",
+    "current_company": "Google",
+    "total_experience": 5.5,
+    "applied_job_id": "64b8f2a1c9d3e4f5a6b7c8d9"  # dummy job ID
+}
 
 @pytest.fixture(autouse=True)
 def clean_db():
@@ -48,20 +59,10 @@ def get_hr_token():
 
 def test_create_candidate_success():
     token = get_admin_token()
-    # Create a job first (needed for applied_job_id)
-    # For simplicity, we'll mock a job ID or just use a dummy ObjectId
     job_id = "64b8f2a1c9d3e4f5a6b7c8d9"  # dummy
     response = client.post(
         "/candidates/",
-        json={
-            "first_name": "John",
-            "last_name": "Doe",
-            "email": "john@nucleusteq.com",
-            "mobile_number": "1234567890",
-            "current_company": "Google",
-            "total_experience": 5.5,
-            "applied_job_id": job_id
-        },
+        json=CANDIDATE_DATA,
         headers={"Authorization": f"Bearer {token}"}
     )
     assert response.status_code == 201
@@ -76,15 +77,7 @@ def test_create_candidate_duplicate_email():
     # Create first candidate
     client.post(
         "/candidates/",
-        json={
-            "first_name": "John",
-            "last_name": "Doe",
-            "email": "john@nucleusteq.com",
-            "mobile_number": "1234567890",
-            "current_company": "Google",
-            "total_experience": 5.5,
-            "applied_job_id": job_id
-        },
+        json=CANDIDATE_DATA,
         headers={"Authorization": f"Bearer {token}"}
     )
     # Create another with same email
@@ -109,15 +102,7 @@ def test_create_candidate_duplicate_mobile():
     job_id = "64b8f2a1c9d3e4f5a6b7c8d9"
     client.post(
         "/candidates/",
-        json={
-            "first_name": "John",
-            "last_name": "Doe",
-            "email": "john@nucleusteq.com",
-            "mobile_number": "1234567890",
-            "current_company": "Google",
-            "total_experience": 5.5,
-            "applied_job_id": job_id
-        },
+        json=CANDIDATE_DATA,
         headers={"Authorization": f"Bearer {token}"}
     )
     response = client.post(
@@ -161,15 +146,7 @@ def test_update_candidate_success():
     # Create candidate
     create_resp = client.post(
         "/candidates/",
-        json={
-            "first_name": "John",
-            "last_name": "Doe",
-            "email": "john@nucleusteq.com",
-            "mobile_number": "1234567890",
-            "current_company": "Google",
-            "total_experience": 5.5,
-            "applied_job_id": job_id
-        },
+        json=CANDIDATE_DATA,
         headers={"Authorization": f"Bearer {token}"}
     )
     cand_id = create_resp.json()["id"]
@@ -191,7 +168,7 @@ def test_update_candidate_success():
 def test_list_candidates():
     token = get_admin_token()
     job_id = "64b8f2a1c9d3e4f5a6b7c8d9"
-    # Create a few candidates
+    
     for i in range(3):
         client.post(
             "/candidates/",
@@ -212,3 +189,52 @@ def test_list_candidates():
     assert len(data["candidates"]) == 2
     assert data["total"] == 3
     assert data["pages"] == 2
+
+def test_upload_resume_success():
+    token = get_admin_token()
+    # Create a candidate
+    resp = client.post(
+        "/candidates/",
+        json=CANDIDATE_DATA,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert resp.status_code == 201
+    candidate_id = resp.json()["id"]
+    
+    # Upload a dummy PDF
+    dummy_pdf = b"%PDF-1.4 test file"
+    response = client.post(
+        f"/candidates/{candidate_id}/resume",
+        files={"file": ("resume.pdf", dummy_pdf, "application/pdf")},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    assert response.json()["filename"] == "resume.pdf"
+
+def test_status_update():
+    token = get_admin_token()
+    # Create candidate
+    resp = client.post(
+        "/candidates/",
+        json=CANDIDATE_DATA,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert resp.status_code == 201
+    candidate_id = resp.json()["id"]
+    
+    # Update status
+    response = client.patch(
+        f"/candidates/{candidate_id}/status",
+        json={"status": "INTERVIEW_SCHEDULED", "notes": "First round scheduled"},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    
+    # Verify history
+    hist = client.get(
+        f"/candidates/{candidate_id}/status-history",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert hist.status_code == 200
+    assert len(hist.json()["history"]) == 1
+    assert hist.json()["history"][0]["status"] == "INTERVIEW_SCHEDULED"

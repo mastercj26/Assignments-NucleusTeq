@@ -1,10 +1,12 @@
 from src.core.database import Database
-from src.exceptions.custom_exceptions import DuplicateException, NotFoundException, ValidationException
+from src.exceptions.custom_exceptions import DuplicateException, NotFoundException
 from bson import ObjectId
 from datetime import datetime
+from gridfs import GridFS
 
 class CandidateRepository:
     collection = Database.get_collection("candidates")
+    fs = GridFS(Database.db)   # GridFS instance
 
     @staticmethod
     def _normalize_candidate(cand):
@@ -16,14 +18,12 @@ class CandidateRepository:
 
     @staticmethod
     def check_unique(email: str, mobile: str, exclude_id: str = None):
-        # Check email uniqueness
         query = {"email": email}
         if exclude_id:
             query["_id"] = {"$ne": ObjectId(exclude_id)}
         if CandidateRepository.collection.find_one(query):
             raise DuplicateException("Email already exists")
 
-        # Check mobile uniqueness
         query = {"mobile_number": mobile}
         if exclude_id:
             query["_id"] = {"$ne": ObjectId(exclude_id)}
@@ -32,7 +32,6 @@ class CandidateRepository:
 
     @staticmethod
     def create(candidate_data: dict):
-        # Validate uniqueness
         CandidateRepository.check_unique(
             candidate_data["email"],
             candidate_data["mobile_number"]
@@ -61,17 +60,13 @@ class CandidateRepository:
 
     @staticmethod
     def update(candidate_id: str, update_data: dict):
-        # If email or mobile is being updated, check uniqueness
         if "email" in update_data or "mobile_number" in update_data:
-            email = update_data.get("email")
-            mobile = update_data.get("mobile_number")
-            # Get current candidate to know existing values
             current = CandidateRepository.collection.find_one({"_id": ObjectId(candidate_id)})
             if not current:
                 raise NotFoundException("Candidate not found")
-            email_to_check = email or current.get("email")
-            mobile_to_check = mobile or current.get("mobile_number")
-            CandidateRepository.check_unique(email_to_check, mobile_to_check, exclude_id=candidate_id)
+            email = update_data.get("email", current.get("email"))
+            mobile = update_data.get("mobile_number", current.get("mobile_number"))
+            CandidateRepository.check_unique(email, mobile, exclude_id=candidate_id)
 
         update_data["updated_at"] = datetime.utcnow().isoformat()
         result = CandidateRepository.collection.update_one(
@@ -81,3 +76,52 @@ class CandidateRepository:
         if result.matched_count == 0:
             raise NotFoundException("Candidate not found")
         return CandidateRepository.get_by_id(candidate_id)
+
+    @staticmethod
+    def save_resume(candidate_id: str, file_data: bytes, filename: str, content_type: str = "application/pdf"):
+        file_id = CandidateRepository.fs.put(
+            file_data,
+            filename=filename,
+            content_type=content_type,
+            candidate_id=candidate_id
+        )
+        CandidateRepository.collection.update_one(
+            {"_id": ObjectId(candidate_id)},
+            {"$set": {
+                "resume_file_id": str(file_id),
+                "resume_filename": filename,
+                "updated_at": datetime.utcnow().isoformat()
+            }}
+        )
+        return str(file_id)
+
+    @staticmethod
+    def get_resume(file_id: str):
+        try:
+            file = CandidateRepository.fs.get(ObjectId(file_id))
+            return file
+        except Exception:
+            return None
+
+    @staticmethod
+    def add_status_history(candidate_id: str, status: str, changed_by: str, notes: str = None):
+        entry = {
+            "status": status,
+            "changed_at": datetime.utcnow().isoformat(),
+            "changed_by": changed_by,
+            "notes": notes
+        }
+        CandidateRepository.collection.update_one(
+            {"_id": ObjectId(candidate_id)},
+            {"$push": {"status_history": entry}, "$set": {"updated_at": datetime.utcnow().isoformat()}}
+        )
+
+    @staticmethod
+    def get_status_history(candidate_id: str):
+        candidate = CandidateRepository.collection.find_one(
+            {"_id": ObjectId(candidate_id)},
+            {"status_history": 1}
+        )
+        if not candidate:
+            raise NotFoundException("Candidate not found")
+        return candidate.get("status_history", [])

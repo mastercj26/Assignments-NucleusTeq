@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional
 from src.enums.candidate_enums import CandidateStatus
 
 class CandidateResponse(BaseModel):
@@ -17,8 +17,21 @@ class CandidateResponse(BaseModel):
     updated_at: str
 
 class CandidateListResponse(BaseModel):
-    candidates: list[CandidateResponse]
+    candidates: List[CandidateResponse]
     total: int
     page: int
     per_page: int
     pages: int
+
+class StatusHistoryItem(BaseModel):
+    status: CandidateStatus
+    changed_at: str
+    changed_by: str
+    notes: Optional[str] = None
+
+class CandidateStatusHistoryResponse(BaseModel):
+    candidate_id: str
+    history: List[StatusHistoryItem]
+
+# Force rebuild to resolve any forward references
+CandidateStatusHistoryResponse.model_rebuild()

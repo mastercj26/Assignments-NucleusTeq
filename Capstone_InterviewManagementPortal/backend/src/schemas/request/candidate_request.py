@@ -46,3 +46,6 @@ class UpdateCandidateRequest(BaseModel):
         if v and not re.match(r'^[0-9]{10}$', v):
             raise ValueError('Mobile number must be exactly 10 digits')
         return v
+class StatusUpdateRequest(BaseModel):
+    status: CandidateStatus
+    notes: Optional[str] = None
