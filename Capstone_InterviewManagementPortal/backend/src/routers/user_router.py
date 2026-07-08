@@ -17,7 +17,6 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         raise HTTPException(status_code=401, detail="Invalid token")
     return payload
 
-# ---- CREATE (already exists) ----
 @router.post("/", response_model=UserResponse, status_code=201)
 async def create_user(
     request: CreateUserRequest,
@@ -32,7 +31,6 @@ async def create_user(
     except AppException as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
-# ---- LIST USERS ----
 @router.get("/", response_model=UserListResponse)
 async def list_users(
     page: int = Query(1, ge=1),
@@ -43,7 +41,6 @@ async def list_users(
         raise HTTPException(status_code=403, detail="Only administrators can list users")
     return UserService.get_all_users(page, per_page)
 
-# ---- GET SINGLE USER ----
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: str,
@@ -56,7 +53,7 @@ async def get_user(
     except AppException as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
-# ---- UPDATE USER ----
+
 @router.put("/{user_id}", response_model=UserResponse)
 async def update_user(
     user_id: str,
@@ -71,7 +68,6 @@ async def update_user(
     except AppException as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
-# ---- DISABLE/ENABLE USER ----
 @router.patch("/{user_id}/disable")
 async def toggle_user_status(
     user_id: str,
@@ -85,3 +81,4 @@ async def toggle_user_status(
         return {"message": f"User {'enabled' if active else 'disabled'} successfully", "user": updated}
     except AppException as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
+    
