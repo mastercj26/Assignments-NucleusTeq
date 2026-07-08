@@ -32,9 +32,9 @@ class CandidateService:
         current_status = candidate.get("status")
         if current_status == new_status:
             raise ValidationException("Status is already set to this value")
-        # Update status in main document
+        
         CandidateRepository.update(candidate_id, {"status": new_status})
-        # Add history entry
+        
         CandidateRepository.add_status_history(candidate_id, new_status, changed_by, notes)
         return {"message": "Status updated successfully", "new_status": new_status}
 
