@@ -29,11 +29,11 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public routes */}
+      
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Protected routes */}
+        
         <Route path="/" element={
           <ProtectedRoute>
             <MainLayout><Dashboard /></MainLayout>
@@ -45,7 +45,6 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/* User Management */}
         <Route path="/users" element={
           <ProtectedRoute>
             <MainLayout><Users /></MainLayout>
@@ -62,7 +61,7 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/* Job Management */}
+     
         <Route path="/jobs" element={
           <ProtectedRoute>
             <MainLayout><Jobs /></MainLayout>
@@ -84,7 +83,7 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/* Change Password (if you have it) */}
+        
         <Route path="/change-password" element={
           <ProtectedRoute>
             <MainLayout><ChangePassword /></MainLayout>
@@ -111,7 +110,7 @@ function App() {
   </ProtectedRoute>
 } />
 
-        {/* Fallback for 404 */}
+     
         <Route path="*" element={
           <ProtectedRoute>
             <MainLayout><h2>Page Not Found</h2></MainLayout>
