@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; // <-- import Link
+import { useNavigate, Link } from 'react-router-dom'; 
 import api from '../api/axiosConfig';
 import { getErrorMessage } from '../utils/errorHandler';
 
@@ -79,7 +79,7 @@ const Login = () => {
         </button>
       </form>
 
-      {/* ====== NEW: Create User Link ====== */}
+     
       <div style={{ marginTop: '20px', textAlign: 'center', borderTop: '1px solid #ddd', paddingTop: '15px' }}>
         <p style={{ margin: 0, fontSize: '14px' }}>
           Don't have an account?{' '}
