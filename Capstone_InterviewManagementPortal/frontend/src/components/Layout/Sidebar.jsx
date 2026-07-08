@@ -19,7 +19,7 @@ const Sidebar = () => {
 };
 const role = localStorage.getItem('user_role');
 
-// Only show "Users" link if role is admin
+
 {role === 'admin' && (
   <li><Link to="/users">Users</Link></li>
 )}
