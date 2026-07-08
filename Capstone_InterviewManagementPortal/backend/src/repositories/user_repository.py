@@ -9,10 +9,10 @@ class UserRepository:
 
     @staticmethod
     def _normalize_user(user):
-        """Convert MongoDB doc to public schema (remove password, rename _id -> id, ensure created_at)."""
+        
         if not user:
             return None
-        # Work on a copy so we don't mutate the original
+        
         user_copy = user.copy()
         user_copy["id"] = str(user_copy.pop("_id"))
         if "created_at" not in user_copy:
@@ -33,17 +33,17 @@ class UserRepository:
 
     @staticmethod
     def get_user_by_email(email: str):
-        """Return raw user with password (for authentication)."""
+        
         user = UserRepository.collection.find_one({"email": email})
         if not user:
             raise NotFoundException(USER_NOT_FOUND)
-        # Convert _id to string but **keep** password
+        
         user["_id"] = str(user["_id"])
-        return user   # password is present
+        return user  
 
     @staticmethod
     def get_user_by_id(user_id: str):
-        """Return public user (without password)."""
+        
         user = UserRepository.collection.find_one({"_id": ObjectId(user_id)})
         if not user:
             raise NotFoundException(USER_NOT_FOUND)
@@ -51,8 +51,7 @@ class UserRepository:
 
     @staticmethod
     def update_user(user_id: str, update_data: dict):
-        """Update user and return public version."""
-        # Remove password if accidentally included
+      
         update_data.pop("password", None)
         update_data["updated_at"] = datetime.utcnow().isoformat()
         result = UserRepository.collection.update_one(
@@ -65,12 +64,12 @@ class UserRepository:
 
     @staticmethod
     def update_user_fields(user_id: str, update_data: dict):
-        """Alias for update_user (partial updates)."""
+        
         return UserRepository.update_user(user_id, update_data)
 
     @staticmethod
     def get_all_users(skip: int = 0, limit: int = 10):
-        """Return list of public users (no passwords)."""
+       
         users = UserRepository.collection.find().skip(skip).limit(limit)
         result = []
         for user in users:
