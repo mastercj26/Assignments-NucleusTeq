@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import { getErrorMessage } from '../utils/errorHandler';
+import { validatePassword } from '../utils/validation';
 
 const ChangePassword = () => {
   const navigate = useNavigate();
-  const email = localStorage.getItem('user_email') || ''; // already logged in
+  const email = localStorage.getItem('user_email') || '';
 
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -17,16 +18,9 @@ const ChangePassword = () => {
     e.preventDefault();
 
     // Validate new password
-    if (newPassword.length < 6 || newPassword.length > 12) {
-      setError('New password must be 6–12 characters long.');
-      return;
-    }
-    if (!/^[A-Za-z0-9@#$%^&+=!]{6,12}$/.test(newPassword)) {
-      setError('Password must contain only letters, numbers, or special characters (@#$%^&+=!).');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
+    const validationError = validatePassword(newPassword, confirmPassword);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 

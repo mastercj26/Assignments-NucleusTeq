@@ -2,14 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { candidateApi } from '../api/candidateApi';
 import { getErrorMessage } from '../utils/errorHandler';
-
-const STATUS_OPTIONS = [
-  'PROFILE_CREATED',
-  'INTERVIEW_SCHEDULED',
-  'INTERVIEW_COMPLETED',
-  'SELECTED',
-  'REJECTED'
-];
+import { CANDIDATE_STATUSES } from '../constants/candidateConstants';  
 
 const CandidateDetails = () => {
   const { id } = useParams();
@@ -20,12 +13,11 @@ const CandidateDetails = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Status update state
   const [newStatus, setNewStatus] = useState('');
   const [statusNotes, setStatusNotes] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
-  // Resume upload state
+  
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -54,7 +46,6 @@ const CandidateDetails = () => {
     fetchData();
   }, [id]);
 
-  // ---- Status Update ----
   const handleStatusUpdate = async (e) => {
     e.preventDefault();
     if (!newStatus) return;
@@ -73,7 +64,6 @@ const CandidateDetails = () => {
     }
   };
 
-  // ---- Resume Upload ----
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file && file.type === 'application/pdf') {
@@ -101,7 +91,6 @@ const CandidateDetails = () => {
     }
   };
 
-  // ---- Resume Download ----
   const handleDownload = async () => {
     try {
       const response = await candidateApi.downloadResume(id);
@@ -128,7 +117,7 @@ const CandidateDetails = () => {
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {success && <p style={{ color: 'green' }}>{success}</p>}
 
-      {/* Candidate Info */}
+       
       <div style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '5px' }}>
         <p><strong>Name:</strong> {candidate.first_name} {candidate.last_name}</p>
         <p><strong>Email:</strong> {candidate.email}</p>
@@ -139,7 +128,7 @@ const CandidateDetails = () => {
         <p><strong>Current Status:</strong> <span style={{ background: '#e0e0e0', padding: '3px 8px', borderRadius: '4px' }}>{candidate.status}</span></p>
       </div>
 
-      {/* ===== RESUME SECTION ===== */}
+   
       <div style={{ marginTop: '25px', padding: '15px', border: '1px solid #ddd', borderRadius: '5px' }}>
         <h3>Resume</h3>
         {candidate.resume_file_id ? (
@@ -168,7 +157,7 @@ const CandidateDetails = () => {
         )}
       </div>
 
-      {/* ===== STATUS UPDATE SECTION ===== */}
+    
       {canManage && (
         <div style={{ marginTop: '25px', padding: '15px', border: '1px solid #ddd', borderRadius: '5px' }}>
           <h3>Update Status</h3>
@@ -181,7 +170,7 @@ const CandidateDetails = () => {
                 required
                 style={{ width: '100%', padding: '8px', marginTop: '5px' }}
               >
-                {STATUS_OPTIONS.map(opt => (
+                {CANDIDATE_STATUSES.map(opt => (
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
               </select>
@@ -207,7 +196,7 @@ const CandidateDetails = () => {
         </div>
       )}
 
-      {/* ===== STATUS HISTORY SECTION ===== */}
+   
       <div style={{ marginTop: '25px', padding: '15px', border: '1px solid #ddd', borderRadius: '5px' }}>
         <h3>Status History</h3>
         {history.length === 0 ? (

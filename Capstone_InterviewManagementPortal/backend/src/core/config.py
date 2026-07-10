@@ -1,14 +1,25 @@
-import os
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
 
-load_dotenv()
+class Settings(BaseSettings):
+    MONGO_URI: str = "mongodb://localhost:27017"
+    DB_NAME: str = "interview_portal"
+    SECRET_KEY: str = "your-secret-key"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    SALT: str = "default_salt"
 
-class Settings:
-    MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-    DB_NAME: str = os.getenv("DB_NAME", "interview_management")
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key")
-    ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
-    SALT: str = os.getenv("SALT", "default_salt")  # Fixed indentation
+   
+    APP_NAME: str
+    APP_VERSION: str
+    DEBUG: bool
+    MONGO_DB_NAME: str
+    LOG_LEVEL: str
+    LOG_FILE: str
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        case_sensitive = True
+        
 
 settings = Settings()

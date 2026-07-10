@@ -1,0 +1,26 @@
+
+export const CANDIDATE_STATUSES = [
+  'PROFILE_CREATED',
+  'INTERVIEW_SCHEDULED',
+  'INTERVIEW_COMPLETED',
+  'SELECTED',
+  'REJECTED'
+];
+
+
+export const CANDIDATE_STATUS_LABELS = {
+  PROFILE_CREATED: 'Profile Created',
+  INTERVIEW_SCHEDULED: 'Interview Scheduled',
+  INTERVIEW_COMPLETED: 'Interview Completed',
+  SELECTED: 'Selected',
+  REJECTED: 'Rejected'
+};
+
+
+export const CANDIDATE_STATUS_COLORS = {
+  PROFILE_CREATED: '#17a2b8',
+  INTERVIEW_SCHEDULED: '#ffc107',
+  INTERVIEW_COMPLETED: '#6c757d',
+  SELECTED: '#28a745',
+  REJECTED: '#dc3545'
+};

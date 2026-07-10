@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { candidateApi } from '../api/candidateApi';
 import { getErrorMessage } from '../utils/errorHandler';
-
+import { CANDIDATE_STATUS_COLORS } from '../constants/candidateConstants';
 const Candidates = () => {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,16 +30,7 @@ const Candidates = () => {
     fetchCandidates(page);
   }, [page]);
 
-  const getStatusColor = (status) => {
-    const colors = {
-      PROFILE_CREATED: '#17a2b8',
-      INTERVIEW_SCHEDULED: '#ffc107',
-      INTERVIEW_COMPLETED: '#6c757d',
-      SELECTED: '#28a745',
-      REJECTED: '#dc3545'
-    };
-    return colors[status] || '#6c757d';
-  };
+  
 
   if (loading) return <p>Loading candidates...</p>;
   if (error) return <p style={{ color: 'red' }}>{error}</p>;
@@ -75,14 +66,13 @@ const Candidates = () => {
                 <td>{c.total_experience} yrs</td>
                 <td>
                   <span style={{
-                    background: getStatusColor(c.status),
-                    color: '#fff',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    fontSize: '12px'
-                  }}>
-                    {c.status}
-                  </span>
+                    background: CANDIDATE_STATUS_COLORS[c.status] || '#6c757d',
+                      color: '#fff',
+                     padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px'  }}>
+                                {c.status}
+                               </span>
                 </td>
                 <td>
                   <Link to={`/candidates/${c.id}`}>
