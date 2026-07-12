@@ -1,227 +1,281 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { candidateApi } from '../api/candidateApi';
-import { getErrorMessage } from '../utils/errorHandler';
-import { CANDIDATE_STATUSES } from '../constants/candidateConstants';  
+import { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import candidateApi from '../api/candidateApi'
+import { getErrorMessage } from '../utils/errorHandler'
+import { isHR, formatDateTime } from '../utils/helpers'
+import { validateFileSize } from '../utils/validation'
+import { CANDIDATE_STATUSES, CANDIDATE_STATUS_LABELS, CANDIDATE_STATUS_BADGE } from '../constants/candidateConstants'
+import Loader from '../components/common/Loader'
+import Alert from '../components/common/Alert'
+import Select from '../components/common/Select'
+import Textarea from '../components/common/Textarea'
+import Button from '../components/common/Button'
 
-const CandidateDetails = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [candidate, setCandidate] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+function CandidateDetails() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const fileRef = useRef(null)
 
-  const [newStatus, setNewStatus] = useState('');
-  const [statusNotes, setStatusNotes] = useState('');
-  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [candidate, setCandidate] = useState(null)
+  const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
-  
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  const [newStatus, setNewStatus] = useState('')
+  const [statusNotes, setStatusNotes] = useState('')
+  const [updatingStatus, setUpdatingStatus] = useState(false)
 
-  const userRole = localStorage.getItem('user_role');
-  const canManage = userRole === 'admin' || userRole === 'hr';
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [fileError, setFileError] = useState('')
+  const [uploading, setUploading] = useState(false)
+
+  const canManage = isHR()
 
   const fetchData = async () => {
-    setLoading(true);
-    setError('');
+    setLoading(true)
+    setError('')
     try {
       const [candRes, histRes] = await Promise.all([
         candidateApi.get(id),
         candidateApi.getStatusHistory(id),
-      ]);
-      setCandidate(candRes.data);
-      setNewStatus(candRes.data.status);
-      setHistory(histRes.data.history || []);
+      ])
+      setCandidate(candRes.data)
+      setNewStatus(candRes.data.status)
+      setHistory(histRes.data.history || [])
     } catch (err) {
-      setError(getErrorMessage(err));
+      setError(getErrorMessage(err))
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  useEffect(() => {
-    fetchData();
-  }, [id]);
+  useEffect(() => { fetchData() }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStatusUpdate = async (e) => {
-    e.preventDefault();
-    if (!newStatus) return;
-    setUpdatingStatus(true);
-    setError('');
-    setSuccess('');
+    e.preventDefault()
+    setUpdatingStatus(true)
+    setError('')
+    setSuccess('')
     try {
-      await candidateApi.updateStatus(id, newStatus, statusNotes);
-      setSuccess('Status updated successfully!');
-      await fetchData();
-      setStatusNotes('');
+      await candidateApi.updateStatus(id, newStatus, statusNotes)
+      setSuccess('Status updated successfully.')
+      setStatusNotes('')
+      await fetchData()
     } catch (err) {
-      setError(getErrorMessage(err));
+      setError(getErrorMessage(err))
     } finally {
-      setUpdatingStatus(false);
+      setUpdatingStatus(false)
     }
-  };
+  }
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      setSelectedFile(file);
-    } else {
-      setSelectedFile(null);
-      alert('Please select a PDF file.');
+    const file = e.target.files[0]
+    setFileError('')
+    if (!file) { setSelectedFile(null); return }
+    if (file.type !== 'application/pdf') {
+      setFileError('Only PDF files are allowed.')
+      setSelectedFile(null)
+      return
     }
-  };
+    const sizeErr = validateFileSize(file, 5)
+    if (sizeErr) {
+      setFileError(sizeErr)
+      setSelectedFile(null)
+      return
+    }
+    setSelectedFile(file)
+  }
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
-    setUploading(true);
-    setError('');
-    setSuccess('');
+    if (!selectedFile) return
+    setUploading(true)
+    setError('')
+    setSuccess('')
     try {
-      await candidateApi.uploadResume(id, selectedFile);
-      setSuccess('Resume uploaded successfully!');
-      setSelectedFile(null);
-      await fetchData();
+      await candidateApi.uploadResume(id, selectedFile)
+      setSuccess('Resume uploaded successfully.')
+      setSelectedFile(null)
+      if (fileRef.current) fileRef.current.value = ''
+      await fetchData()
     } catch (err) {
-      setError(getErrorMessage(err));
+      setError(getErrorMessage(err))
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
-  };
+  }
 
   const handleDownload = async () => {
     try {
-      const response = await candidateApi.downloadResume(id);
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `resume_${candidate.first_name}_${candidate.last_name}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      setError('Could not download resume. File may not exist.');
+      const res = await candidateApi.downloadResume(id)
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `resume_${candidate.first_name}_${candidate.last_name}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch {
+      setError('Could not download resume.')
     }
-  };
+  }
 
-  if (loading) return <p>Loading candidate details...</p>;
-  if (error && !candidate) return <p style={{ color: 'red' }}>{error}</p>;
-  if (!candidate) return <p>Candidate not found.</p>;
+  if (loading) return <Loader />
+  if (error && !candidate) return <Alert type="danger">{error}</Alert>
+  if (!candidate) return null
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <h2>Candidate Details</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {success && <p style={{ color: 'green' }}>{success}</p>}
-
-       
-      <div style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '5px' }}>
-        <p><strong>Name:</strong> {candidate.first_name} {candidate.last_name}</p>
-        <p><strong>Email:</strong> {candidate.email}</p>
-        <p><strong>Mobile:</strong> {candidate.mobile_number}</p>
-        <p><strong>Current Company:</strong> {candidate.current_company || 'N/A'}</p>
-        <p><strong>Total Experience:</strong> {candidate.total_experience} years</p>
-        <p><strong>Applied Job ID:</strong> {candidate.applied_job_id}</p>
-        <p><strong>Current Status:</strong> <span style={{ background: '#e0e0e0', padding: '3px 8px', borderRadius: '4px' }}>{candidate.status}</span></p>
+    <div>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">{candidate.first_name} {candidate.last_name}</h1>
+          <p className="page-subtitle">{candidate.email}</p>
+        </div>
+        <div className="flex gap-2">
+          {canManage && (
+            <Link to={`/candidates/edit/${id}`}>
+              <Button variant="secondary">Edit</Button>
+            </Link>
+          )}
+          <Button variant="secondary" onClick={() => navigate('/candidates')}>Back</Button>
+        </div>
       </div>
 
-   
-      <div style={{ marginTop: '25px', padding: '15px', border: '1px solid #ddd', borderRadius: '5px' }}>
-        <h3>Resume</h3>
-        {candidate.resume_file_id ? (
-          <div>
-            <p>Resume uploaded.</p>
-            <button onClick={handleDownload} style={{ padding: '8px 16px' }}>
-              Download Resume
-            </button>
+      {error && <Alert type="danger" onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert type="success" onClose={() => setSuccess('')}>{success}</Alert>}
+
+      <div className="grid-2col">
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">Profile</span>
+            <span className={`badge ${CANDIDATE_STATUS_BADGE[candidate.status] || 'badge-secondary'}`}>
+              {CANDIDATE_STATUS_LABELS[candidate.status] || candidate.status}
+            </span>
           </div>
-        ) : (
-          <p>No resume uploaded yet.</p>
-        )}
+          <div className="card-body">
+            <div className="detail-grid">
+              <div className="detail-item">
+                <div className="detail-label">Mobile</div>
+                <div className="detail-value">{candidate.mobile_number}</div>
+              </div>
+              <div className="detail-item">
+                <div className="detail-label">Experience</div>
+                <div className="detail-value">{candidate.total_experience} year(s)</div>
+              </div>
+              <div className="detail-item">
+                <div className="detail-label">Current Company</div>
+                <div className="detail-value">{candidate.current_company || '—'}</div>
+              </div>
+              <div className="detail-item">
+                <div className="detail-label">Applied Job ID</div>
+                <div className="detail-value text-sm text-muted">{candidate.applied_job_id}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">Resume</span>
+          </div>
+          <div className="card-body">
+            {candidate.resume_file_id ? (
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-sm text-muted">Resume uploaded</span>
+                <Button variant="secondary" size="sm" onClick={handleDownload}>Download PDF</Button>
+              </div>
+            ) : (
+              <p className="text-muted text-sm mb-4">No resume uploaded yet.</p>
+            )}
+
+            {canManage && (
+              <div>
+                <div className="form-group">
+                  <label className="form-label">Upload Resume (PDF only)</label>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                    className="form-control"
+                  />
+                  {fileError && <p className="form-error">{fileError}</p>}
+                </div>
+                <Button
+                  onClick={handleUpload}
+                  disabled={!selectedFile || uploading}
+                  size="sm"
+                >
+                  {uploading ? 'Uploading…' : 'Upload Resume'}
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
 
         {canManage && (
-          <div style={{ marginTop: '10px' }}>
-            <input type="file" accept=".pdf" onChange={handleFileChange} />
-            <button 
-              onClick={handleUpload} 
-              disabled={!selectedFile || uploading}
-              style={{ marginLeft: '10px', padding: '6px 16px' }}
-            >
-              {uploading ? 'Uploading...' : 'Upload Resume'}
-            </button>
-            {selectedFile && <span style={{ marginLeft: '10px' }}>Selected: {selectedFile.name}</span>}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Update Status</span>
+            </div>
+            <div className="card-body">
+              <form onSubmit={handleStatusUpdate} noValidate>
+                <Select
+                  label="New Status"
+                  name="newStatus"
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value)}
+                  required
+                >
+                  {CANDIDATE_STATUSES.map((s) => (
+                    <option key={s} value={s}>{CANDIDATE_STATUS_LABELS[s]}</option>
+                  ))}
+                </Select>
+                <Textarea
+                  label="Notes"
+                  name="statusNotes"
+                  value={statusNotes}
+                  onChange={(e) => setStatusNotes(e.target.value)}
+                  rows={2}
+                  placeholder="Optional notes about this status change"
+                />
+                <Button type="submit" disabled={updatingStatus} size="sm">
+                  {updatingStatus ? 'Updating…' : 'Update Status'}
+                </Button>
+              </form>
+            </div>
           </div>
         )}
-      </div>
 
-    
-      {canManage && (
-        <div style={{ marginTop: '25px', padding: '15px', border: '1px solid #ddd', borderRadius: '5px' }}>
-          <h3>Update Status</h3>
-          <form onSubmit={handleStatusUpdate}>
-            <div>
-              <label>New Status</label>
-              <select
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
-                required
-                style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-              >
-                {CANDIDATE_STATUSES.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
+        <div className={`card ${canManage ? '' : 'span-full'}`}>
+          <div className="card-header">
+            <span className="card-title">Status History</span>
+          </div>
+          <div className="card-body">
+            {history.length === 0 ? (
+              <p className="text-muted text-sm">No status changes recorded yet.</p>
+            ) : (
+              <div className="timeline">
+                {history.map((item, i) => (
+                  <div key={i} className="timeline-item">
+                    <div className="timeline-dot" />
+                    <div className="timeline-body">
+                      <div className="timeline-status">{CANDIDATE_STATUS_LABELS[item.status] || item.status}</div>
+                      <div className="timeline-meta">
+                        {formatDateTime(item.changed_at)} &middot; by {item.changed_by}
+                      </div>
+                      {item.notes && <div className="timeline-notes">{item.notes}</div>}
+                    </div>
+                  </div>
                 ))}
-              </select>
-            </div>
-            <div style={{ marginTop: '10px' }}>
-              <label>Notes (optional)</label>
-              <textarea
-                value={statusNotes}
-                onChange={(e) => setStatusNotes(e.target.value)}
-                rows="2"
-                style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-                placeholder="Add any comments about this status change..."
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={updatingStatus}
-              style={{ marginTop: '10px', padding: '8px 20px' }}
-            >
-              {updatingStatus ? 'Updating...' : 'Update Status'}
-            </button>
-          </form>
+              </div>
+            )}
+          </div>
         </div>
-      )}
-
-   
-      <div style={{ marginTop: '25px', padding: '15px', border: '1px solid #ddd', borderRadius: '5px' }}>
-        <h3>Status History</h3>
-        {history.length === 0 ? (
-          <p>No status changes recorded yet.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {history.map((item, index) => (
-              <li key={index} style={{ borderBottom: '1px solid #eee', padding: '8px 0' }}>
-                <strong>{item.status}</strong> – {new Date(item.changed_at).toLocaleString()}
-                <br />
-                <span style={{ fontSize: '0.9em', color: '#555' }}>
-                  by {item.changed_by}
-                  {item.notes && ` – Note: ${item.notes}`}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
-
-      <button onClick={() => navigate('/candidates')} style={{ marginTop: '20px' }}>
-        Back to Candidates
-      </button>
     </div>
-  );
-};
+  )
+}
 
-export default CandidateDetails;
+export default CandidateDetails

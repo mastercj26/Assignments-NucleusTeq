@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class CandidateStatus(str, Enum):
     PROFILE_CREATED = "PROFILE_CREATED"
     INTERVIEW_SCHEDULED = "INTERVIEW_SCHEDULED"

@@ -1,17 +1,29 @@
-import React from 'react';
+import { useNavigate } from 'react-router-dom'
+import { getUserEmail, getRole } from '../../utils/helpers'
+import { ROLE_LABELS } from '../../constants/roles'
 
-const Header = () => {
+function Header() {
+  const navigate = useNavigate()
+  const email = getUserEmail()
+  const role = getRole()
+
+  const handleLogout = () => {
+    localStorage.clear()
+    navigate('/login')
+  }
+
   return (
-    <header style={{ padding: '10px 20px', background: '#007bff', color: '#fff' }}>
-      <h2>Interview Management</h2>
+    <header className="app-header">
+      <span className="header-title">Interview Management Portal</span>
+      <div className="header-right">
+        <span className="header-user">{email}</span>
+        <span className="header-role">{ROLE_LABELS[role] || role}</span>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
     </header>
-  );
-};
-const handleLogout = () => {
-  localStorage.clear();
-  window.location.href = '/login';
-};
+  )
+}
 
-
-<button onClick={handleLogout} style={{ float: 'right' }}>Logout</button>
-export default Header;
+export default Header

@@ -1,44 +1,108 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { jobApi } from '../api/jobApi';
-import { getErrorMessage } from '../utils/errorHandler';
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import jobApi from '../api/jobApi'
+import { getErrorMessage } from '../utils/errorHandler'
+import { isHR } from '../utils/helpers'
+import Loader from '../components/common/Loader'
+import Alert from '../components/common/Alert'
+import Button from '../components/common/Button'
 
-const JobDetails = () => {
-  const { id } = useParams();
-  const [job, setJob] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+function JobDetails() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [job, setJob] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    const fetchJob = async () => {
-      try {
-        const res = await jobApi.get(id);
-        setJob(res.data);
-      } catch (err) {
-        setError(getErrorMessage(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchJob();
-  }, [id]);
+    jobApi.get(id)
+      .then((res) => setJob(res.data))
+      .catch((err) => setError(getErrorMessage(err)))
+      .finally(() => setLoading(false))
+  }, [id])
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
-  if (!job) return <p>Job not found</p>;
+  if (loading) return <Loader />
+  if (error) return <Alert type="danger">{error}</Alert>
+  if (!job) return null
+
+  const statusBadge = (status) => {
+    const map = { open: 'badge-success', closed: 'badge-danger', draft: 'badge-secondary' }
+    return <span className={`badge ${map[status] || 'badge-secondary'}`}>{status}</span>
+  }
 
   return (
     <div>
-      <h2>{job.job_title}</h2>
-      <p><strong>Role:</strong> {job.job_role}</p>
-      <p><strong>Details:</strong> {job.job_details}</p>
-      <p><strong>Experience:</strong> {job.experience_required} years</p>
-      <p><strong>Employment:</strong> {job.employment_type}</p>
-      <p><strong>Location:</strong> {job.location}</p>
-      <p><strong>Status:</strong> {job.status}</p>
-      <p><strong>Skills:</strong> {job.required_skills.join(', ')}</p>
-    </div>
-  );
-};
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">{job.job_title}</h1>
+          <p className="page-subtitle">{job.job_role} &middot; {job.location}</p>
+        </div>
+        <div className="flex gap-2">
+          {isHR() && (
+            <Link to={`/jobs/edit/${id}`}>
+              <Button variant="secondary">Edit Job</Button>
+            </Link>
+          )}
+          <Button variant="secondary" onClick={() => navigate('/jobs')}>Back</Button>
+        </div>
+      </div>
 
-export default JobDetails;
+      <div className="grid-2col">
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">Job Details</span>
+            {statusBadge(job.status)}
+          </div>
+          <div className="card-body">
+            <div className="detail-grid">
+              <div className="detail-item">
+                <div className="detail-label">Employment Type</div>
+                <div className="detail-value">{job.employment_type}</div>
+              </div>
+              <div className="detail-item">
+                <div className="detail-label">Experience Required</div>
+                <div className="detail-value">{job.experience_required} year(s)</div>
+              </div>
+              <div className="detail-item">
+                <div className="detail-label">Location</div>
+                <div className="detail-value">{job.location}</div>
+              </div>
+              <div className="detail-item">
+                <div className="detail-label">Status</div>
+                <div className="detail-value capitalize">{job.status}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">Required Skills</span>
+          </div>
+          <div className="card-body">
+            {job.required_skills.length === 0 ? (
+              <p className="text-muted">No skills listed</p>
+            ) : (
+              <div className="tags mt-0">
+                {job.required_skills.map((skill) => (
+                  <span key={skill} className="tag">{skill}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="card span-full">
+          <div className="card-header">
+            <span className="card-title">Description</span>
+          </div>
+          <div className="card-body">
+            <p className="job-details-text">{job.job_details}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default JobDetails

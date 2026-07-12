@@ -1,27 +1,48 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom'
+import { getRole } from '../../utils/helpers'
 
-const Sidebar = () => {
+const ALL_NAV = [
+  { to: '/dashboard', label: 'Dashboard', roles: ['admin', 'hr', 'interviewer'] },
+  { to: '/users', label: 'Users', roles: ['admin'] },
+  { to: '/jobs', label: 'Jobs', roles: ['admin', 'hr', 'interviewer'] },
+  { to: '/candidates', label: 'Candidates', roles: ['admin', 'hr', 'interviewer'] },
+  { to: '/interviews', label: 'Interviews', roles: ['admin', 'hr', 'interviewer'] },
+]
+
+function Sidebar() {
+  const role = getRole()
+  const navItems = ALL_NAV.filter((item) => item.roles.includes(role))
+
   return (
-    <div style={{ width: '200px', background: '#f4f4f4', padding: '20px', height: '100vh' }}>
-      <h3>Interview Portal</h3>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        <li><Link to="/dashboard">Dashboard</Link></li>
-        <li><Link to="/jobs">Jobs</Link></li>
-        <li><Link to="/candidates">Candidates</Link></li>
-        <li><Link to="/interviews">Interviews</Link></li>
-        <li><Link to="/users">Users</Link></li>
-        <li><Link to="/login">Login</Link></li>
-        <li><Link to="/change-password">Change Password</Link></li>
-      </ul>
-    </div>
-  );
-};
-const role = localStorage.getItem('user_role');
+    <aside className="sidebar">
+      <div className="sidebar-brand">
+        <div className="sidebar-brand-name">IMP</div>
+        <div className="sidebar-brand-sub">Interview Management Portal</div>
+      </div>
 
-// Only show "Users" link if role is admin
-{role === 'admin' && (
-  <li><Link to="/users">Users</Link></li>
-)}
+      <nav className="sidebar-nav">
+        <div className="nav-section-label">Menu</div>
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+          >
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
 
-export default Sidebar;
+      <div className="sidebar-footer">
+        <NavLink
+          to="/change-password"
+          className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+        >
+          Change Password
+        </NavLink>
+      </div>
+    </aside>
+  )
+}
+
+export default Sidebar

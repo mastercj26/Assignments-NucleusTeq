@@ -1,130 +1,176 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { jobApi } from '../api/jobApi';
-import { getErrorMessage } from '../utils/errorHandler';
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import jobApi from '../api/jobApi'
+import { getErrorMessage } from '../utils/errorHandler'
+import { validateExperience } from '../utils/validation'
+import Alert from '../components/common/Alert'
+import Input from '../components/common/Input'
+import Select from '../components/common/Select'
+import Textarea from '../components/common/Textarea'
+import TagInput from '../components/common/TagInput'
+import Button from '../components/common/Button'
 
-const CreateJob = () => {
-  const navigate = useNavigate();
-  const [form, setForm] = useState({
-    job_title: '',
-    job_details: '',
-    job_role: '',
-    required_skills: [],
-    experience_required: 0,
-    employment_type: 'Full Time',
-    location: '',
-    status: 'open'
-  });
-  const [skillsInput, setSkillsInput] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+const EMPLOYMENT_TYPES = ['Full Time', 'Internship']
+const STATUSES = ['open', 'closed', 'draft']
 
-  const employmentTypes = ['Full Time', 'Internship'];
-  const statuses = ['open', 'closed', 'draft'];
+const initialForm = {
+  job_title: '',
+  job_details: '',
+  job_role: '',
+  required_skills: [],
+  experience_required: 0,
+  employment_type: 'Full Time',
+  location: '',
+  status: 'open',
+}
+
+function CreateJob() {
+  const navigate = useNavigate()
+  const [form, setForm] = useState(initialForm)
+  const [errors, setErrors] = useState({})
+  const [serverError, setServerError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const validate = () => {
+    const errs = {}
+    if (!form.job_title.trim()) errs.job_title = 'Job title is required'
+    if (!form.job_details.trim()) errs.job_details = 'Job details are required'
+    if (!form.job_role.trim()) errs.job_role = 'Job role is required'
+    if (!form.location.trim()) errs.location = 'Location is required'
+    if (form.required_skills.length === 0) errs.required_skills = 'At least one skill is required'
+    const expErr = validateExperience(form.experience_required)
+    if (expErr) errs.experience_required = expErr
+    return errs
+  }
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
-
-  const addSkill = () => {
-    if (skillsInput.trim() && !form.required_skills.includes(skillsInput.trim())) {
-      setForm({ ...form, required_skills: [...form.required_skills, skillsInput.trim()] });
-      setSkillsInput('');
-    }
-  };
-
-  const removeSkill = (skill) => {
-    setForm({ ...form, required_skills: form.required_skills.filter(s => s !== skill) });
-  };
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (form.required_skills.length === 0) {
-      setError('At least one skill is required.');
-      return;
-    }
-    setLoading(true);
-    setError('');
+    e.preventDefault()
+    const errs = validate()
+    if (Object.keys(errs).length > 0) { setErrors(errs); return }
+
+    setLoading(true)
+    setServerError('')
+
     try {
-      await jobApi.create(form);
-      navigate('/jobs');
+      await jobApi.create({ ...form, experience_required: Number(form.experience_required) })
+      navigate('/jobs')
     } catch (err) {
-      setError(getErrorMessage(err));
+      setServerError(getErrorMessage(err))
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div style={{ maxWidth: '600px', margin: '20px auto' }}>
-      <h2>Create Job Description</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
+    <div>
+      <div className="page-header">
         <div>
-          <label>Job Title</label>
-          <input name="job_title" value={form.job_title} onChange={handleChange} required style={{ width: '100%', padding: '8px' }} />
+          <h1 className="page-title">Create Job</h1>
+          <p className="page-subtitle">Add a new job description</p>
         </div>
-        <div style={{ marginTop: '10px' }}>
-          <label>Job Details</label>
-          <textarea name="job_details" value={form.job_details} onChange={handleChange} required rows="4" style={{ width: '100%', padding: '8px' }} />
-        </div>
-        <div style={{ marginTop: '10px' }}>
-          <label>Job Role</label>
-          <input name="job_role" value={form.job_role} onChange={handleChange} required style={{ width: '100%', padding: '8px' }} />
-        </div>
-        <div style={{ marginTop: '10px' }}>
-          <label>Required Skills</label>
-          <div style={{ display: 'flex' }}>
-            <input
-              type="text"
-              value={skillsInput}
-              onChange={(e) => setSkillsInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-              style={{ flex: 1, padding: '8px' }}
-              placeholder="Type skill and press Enter"
-            />
-            <button type="button" onClick={addSkill} style={{ padding: '8px 16px' }}>Add</button>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
-            {form.required_skills.map(skill => (
-              <span key={skill} style={{ background: '#e0e0e0', padding: '4px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center' }}>
-                {skill}
-                <button type="button" onClick={() => removeSkill(skill)} style={{ marginLeft: '8px', background: 'transparent', border: 'none', cursor: 'pointer' }}>✕</button>
-              </span>
-            ))}
-          </div>
-        </div>
-        <div style={{ marginTop: '10px' }}>
-          <label>Experience Required (years)</label>
-          <input name="experience_required" type="number" value={form.experience_required} onChange={handleChange} min="0" style={{ width: '100%', padding: '8px' }} />
-        </div>
-        <div style={{ marginTop: '10px' }}>
-          <label>Employment Type</label>
-          <select name="employment_type" value={form.employment_type} onChange={handleChange} style={{ width: '100%', padding: '8px' }}>
-            {employmentTypes.map(type => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
-        </div>
-        <div style={{ marginTop: '10px' }}>
-          <label>Location</label>
-          <input name="location" value={form.location} onChange={handleChange} required style={{ width: '100%', padding: '8px' }} />
-        </div>
-        <div style={{ marginTop: '10px' }}>
-          <label>Status</label>
-          <select name="status" value={form.status} onChange={handleChange} style={{ width: '100%', padding: '8px' }}>
-            {statuses.map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" disabled={loading} style={{ marginTop: '20px', padding: '10px 20px' }}>
-          {loading ? 'Creating...' : 'Create Job'}
-        </button>
-      </form>
-    </div>
-  );
-};
+      </div>
 
-export default CreateJob;
+      <div className="card card-xl">
+        <div className="card-body">
+          {serverError && <Alert type="danger" onClose={() => setServerError('')}>{serverError}</Alert>}
+
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="form-row">
+              <Input
+                label="Job Title"
+                name="job_title"
+                value={form.job_title}
+                onChange={handleChange}
+                error={errors.job_title}
+                required
+              />
+              <Input
+                label="Job Role"
+                name="job_role"
+                value={form.job_role}
+                onChange={handleChange}
+                error={errors.job_role}
+                required
+              />
+            </div>
+
+            <Textarea
+              label="Job Details"
+              name="job_details"
+              value={form.job_details}
+              onChange={handleChange}
+              error={errors.job_details}
+              required
+              rows={4}
+            />
+
+            <div className="form-row-3">
+              <Input
+                label="Experience (years)"
+                name="experience_required"
+                type="number"
+                value={form.experience_required}
+                onChange={handleChange}
+                error={errors.experience_required}
+                min="0"
+                max="50"
+                step="0.5"
+              />
+              <Select
+                label="Employment Type"
+                name="employment_type"
+                value={form.employment_type}
+                onChange={handleChange}
+              >
+                {EMPLOYMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              </Select>
+              <Select
+                label="Status"
+                name="status"
+                value={form.status}
+                onChange={handleChange}
+              >
+                {STATUSES.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
+              </Select>
+            </div>
+
+            <Input
+              label="Location"
+              name="location"
+              value={form.location}
+              onChange={handleChange}
+              error={errors.location}
+              required
+            />
+
+            <TagInput
+              label="Required Skills"
+              value={form.required_skills}
+              onChange={(skills) => { setForm((prev) => ({ ...prev, required_skills: skills })); setErrors((prev) => ({ ...prev, required_skills: '' })) }}
+              error={errors.required_skills}
+              required
+              placeholder="e.g. React, Python — press Enter to add"
+            />
+
+            <div className="form-actions">
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Creating…' : 'Create Job'}
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => navigate('/jobs')}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default CreateJob

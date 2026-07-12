@@ -1,0 +1,79 @@
+platform win32 -- Python 3.14.5, pytest-7.4.3, pluggy-1.6.0
+rootdir: C:\Users\cj450\Downloads\Assignments-NucleusTeq\Capstone_InterviewManagementPortal\backend
+plugins: anyio-3.7.1, cov-4.1.0
+collected 54 items                                                                                                                         
+
+tests\test_auth.py ..........                                                                                                        [ 18%]
+tests\test_candidate.py .............                                                                                                [ 42%]
+tests\test_dashboard.py ...                                                                                                          [ 48%]
+tests\test_feedback.py ......                                                                                                        [ 59%]
+tests\test_interview.py ..........                                                                                                   [ 77%]
+tests\test_user.py ............                                                                                                      [100%]
+
+
+
+Name                                         Stmts   Miss  Cover
+----------------------------------------------------------------
+src\__init__.py                                  0      0   100%
+src\constants\__init__.py                        0      0   100%
+src\constants\user_constants.py                  9      0   100%
+src\core\__init__.py                             0      0   100%
+src\core\config.py                              15      0   100%
+src\core\database.py                            24      8    67%
+src\core\dependencies.py                        38      6    84%
+src\core\middleware.py                          25      4    84%
+src\core\security.py                            20      4    80%
+src\enums\__init__.py                            0      0   100%
+src\enums\candidate_enums.py                     7      0   100%
+src\enums\interview_enums.py                     9      0   100%
+src\enums\job_enums.py                           8      0   100%
+src\enums\user_enums.py                          9      0   100%
+src\exceptions\__init__.py                       0      0   100%
+src\exceptions\custom_exceptions.py             20      0   100%
+src\exceptions\exception_handlers.py            17      3    82%
+src\main.py                                     34      7    79%
+src\repositories\__init__.py                     0      0   100%
+src\repositories\candidate_repository.py        92     15    84%
+src\repositories\feedback_repository.py         31      3    90%
+src\repositories\interview_repository.py        66      5    92%
+src\repositories\job_repository.py              48     11    77%
+src\repositories\user_repository.py             70      5    93%
+src\routers\__init__.py                          7      0   100%
+src\routers\auth_router.py                      16      1    94%
+src\routers\candidate_router.py                 39      0   100%
+src\routers\dashboard_router.py                 14      0   100%
+src\routers\feedback_router.py                  12      0   100%
+src\routers\interview_router.py                 23      0   100%
+src\routers\job_router.py                       20      3    85%
+src\routers\user_router.py                      30      0   100%
+src\schemas\__init__.py                          0      0   100%
+src\schemas\request\__init__.py                  0      0   100%
+src\schemas\request\auth_request.py             25      3    88%
+src\schemas\request\candidate_request.py        67     13    81%
+src\schemas\request\feedback_request.py          9      0   100%
+src\schemas\request\interview_request.py        12      0   100%
+src\schemas\request\job_request.py              20      0   100%
+src\schemas\request\user_request.py             45      4    91%
+src\schemas\response\__init__.py                 0      0   100%
+src\schemas\response\auth_response.py            8      0   100%
+src\schemas\response\candidate_response.py      10      0   100%
+src\schemas\response\common_response.py          5      0   100%
+src\schemas\response\dashboard_response.py       3      0   100%
+src\schemas\response\feedback_response.py        4      0   100%
+src\schemas\response\interview_response.py       6      0   100%
+src\schemas\response\job_response.py             5      0   100%
+src\schemas\response\user_response.py            8      0   100%
+src\seed.py                                     16     16     0%
+src\services\__init__.py                         0      0   100%
+src\services\auth_service.py                    25      1    96%
+src\services\candidate_service.py               71      8    89%
+src\services\dashboard_service.py               20      0   100%
+src\services\feedback_service.py                29      1    97%
+src\services\interview_service.py               54      1    98%
+src\services\job_service.py                     17      6    65%
+src\services\user_service.py                    39      1    97%
+src\utils\__init__.py                            0      0   100%
+src\utils\common.py                              4      0   100%
+src\utils\logger.py                             21      1    95%
+----------------------------------------------------------------
+TOTAL                                         1226    130    89%

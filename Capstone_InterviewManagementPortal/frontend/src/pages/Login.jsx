@@ -1,105 +1,100 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; 
-import api from '../api/axiosConfig';
-import { getErrorMessage } from '../utils/errorHandler';
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import api from '../api/axiosConfig'
+import { getErrorMessage } from '../utils/errorHandler'
+import { normalizeEmail } from '../utils/validation'
+import Alert from '../components/common/Alert'
+import Input from '../components/common/Input'
+import Button from '../components/common/Button'
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+function Login() {
+  const navigate = useNavigate()
+  const [form, setForm] = useState({ email: '', password: '' })
+  const [errors, setErrors] = useState({})
+  const [serverError, setServerError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const validate = () => {
+    const errs = {}
+    if (!form.email.trim()) errs.email = 'Email is required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Invalid email address'
+    if (!form.password) errs.password = 'Password is required'
+    return errs
+  }
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+    e.preventDefault()
+    const errs = validate()
+    if (Object.keys(errs).length > 0) { setErrors(errs); return }
 
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail || !trimmedEmail.includes('@')) {
-      setError('Please enter a valid email address.');
-      return;
-    }
+    setLoading(true)
+    setServerError('')
 
     try {
-      const response = await api.post('/auth/login', { email: trimmedEmail, password });
-      const { access_token, user_id, email: userEmail, role } = response.data;
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('user_id', user_id);
-      localStorage.setItem('user_email', userEmail);
-      localStorage.setItem('user_role', role);
-      navigate('/dashboard');
+      const res = await api.post('/auth/login', { email: normalizeEmail(form.email), password: form.password })
+      const { access_token, user_id, email, role } = res.data
+      localStorage.setItem('access_token', access_token)
+      localStorage.setItem('user_id', user_id)
+      localStorage.setItem('user_email', email)
+      localStorage.setItem('user_role', role)
+      navigate('/dashboard')
     } catch (err) {
-      const errorMessage = getErrorMessage(err);
-      if (errorMessage.toLowerCase().includes('reset your password')) {
-        localStorage.setItem('reset_email', trimmedEmail);
-        navigate('/reset-password', { state: { email: trimmedEmail } });
+      const msg = getErrorMessage(err)
+      if (msg.toLowerCase().includes('reset your password')) {
+        navigate('/reset-password', { state: { email: normalizeEmail(form.email) } })
       } else {
-        setError(errorMessage);
+        setServerError(msg)
       }
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-      <h2>Login</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', margin: '8px 0' }}
-          />
-        </div>
-        <div>
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', margin: '8px 0' }}
-          />
-        </div>
-        <button 
-          type="submit" 
-          style={{ 
-            width: '100%', 
-            padding: '10px', 
-            background: '#007bff', 
-            color: '#fff', 
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Login
-        </button>
-      </form>
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-logo">IMP</div>
+        <h1 className="auth-title">Sign in</h1>
+        <p className="auth-subtitle">Interview Management Portal</p>
 
-     
-      <div style={{ marginTop: '20px', textAlign: 'center', borderTop: '1px solid #ddd', paddingTop: '15px' }}>
-        <p style={{ margin: 0, fontSize: '14px' }}>
-          Don't have an account?{' '}
-          <Link 
-            to="/users/create" 
-            style={{ 
-              color: '#28a745', 
-              textDecoration: 'underline',
-              fontWeight: 'bold'
-            }}
-          >
-            Create User
-          </Link>
-        </p>
-        <p style={{ margin: '5px 0 0', fontSize: '12px', color: '#888' }}>
-          (Admin users can create new users from here)
-        </p>
+        {serverError && <Alert type="danger" onClose={() => setServerError('')}>{serverError}</Alert>}
+
+        <form onSubmit={handleSubmit} noValidate autoComplete="off">
+          <Input
+            label="Email"
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+            error={errors.email}
+            required
+            autoComplete="off"
+            placeholder="you@nucleusteq.com"
+          />
+          <Input
+            label="Password"
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+            error={errors.password}
+            required
+            autoComplete="new-password"
+            placeholder="Enter your password"
+          />
+          <Button type="submit" disabled={loading} className="btn-block btn-lg">
+            {loading ? 'Signing in…' : 'Sign in'}
+          </Button>
+        </form>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login

@@ -1,86 +1,114 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import api from '../api/axiosConfig';
-import { getErrorMessage } from '../utils/errorHandler';
+import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useDelayedNavigate } from '../hooks/useDelayedNavigate'
+import api from '../api/axiosConfig'
+import { getErrorMessage } from '../utils/errorHandler'
+import { validatePassword } from '../utils/validation'
+import Alert from '../components/common/Alert'
+import Input from '../components/common/Input'
+import Button from '../components/common/Button'
 
-const ResetPassword = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const email = location.state?.email || '';
+function ResetPassword() {
+  const { state } = useLocation()
+  const navigate = useNavigate()
+  const delayedNavigate = useDelayedNavigate()
+  const email = state?.email || localStorage.getItem('reset_email') || ''
 
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [form, setForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' })
+  const [errors, setErrors] = useState({})
+  const [serverError, setServerError] = useState('')
+  const [success, setSuccess] = useState(false)
+  const [loading, setLoading] = useState(false)
 
+  const validate = () => {
+    const errs = {}
+    if (!form.oldPassword) errs.oldPassword = 'Current password is required'
+    const pwErr = validatePassword(form.newPassword, form.confirmPassword)
+    if (pwErr) errs.newPassword = pwErr
+    return errs
+  }
 
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    setError('');
-    setMessage('');
+    e.preventDefault()
+    const errs = validate()
+    if (Object.keys(errs).length > 0) { setErrors(errs); return }
+
+    setLoading(true)
+    setServerError('')
+
     try {
       await api.post('/auth/reset-password', {
         email,
-        old_password: oldPassword,
-        new_password: newPassword,
-      });
-      setMessage('Password reset successfully! Redirecting to login...');
-      setTimeout(() => navigate('/login'), 3000);
+        old_password: form.oldPassword,
+        new_password: form.newPassword,
+      })
+      setSuccess(true)
+      delayedNavigate('/login', 2500)
     } catch (err) {
-      const errorMsg = getErrorMessage(err);
-      setError(errorMsg);
+      setServerError(getErrorMessage(err))
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px', border: '1px solid #ccc' }}>
-      <h2>Reset Password</h2>
-      <p>Resetting password for <strong>{email}</strong></p>
-      {message && <p style={{ color: 'green' }}>{message}</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Old Password</label>
-          <input
-            type="password"
-            value={oldPassword}
-            onChange={(e) => setOldPassword(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', margin: '8px 0' }}
-          />
-        </div>
-        <div>
-          <label>New Password</label>
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', margin: '8px 0' }}
-          />
-        </div>
-        <div>
-          <label>Confirm New Password</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', margin: '8px 0' }}
-          />
-        </div>
-        <button type="submit" style={{ padding: '10px 20px', background: '#28a745', color: '#fff', border: 'none' }}>
-          Reset Password
-        </button>
-      </form>
-    </div>
-  );
-};
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-logo">IMP</div>
+        <h1 className="auth-title">Reset Password</h1>
+        <p className="auth-subtitle">
+          {email ? `Setting new password for ${email}` : 'Set a new password for your account'}
+        </p>
 
-export default ResetPassword;
+        {success && <Alert type="success">Password reset successfully! Redirecting to login…</Alert>}
+        {serverError && <Alert type="danger" onClose={() => setServerError('')}>{serverError}</Alert>}
+
+        {!success && (
+          <form onSubmit={handleSubmit} noValidate>
+            <Input
+              label="Current Password"
+              name="oldPassword"
+              type="password"
+              value={form.oldPassword}
+              onChange={handleChange}
+              error={errors.oldPassword}
+              required
+              autoComplete="current-password"
+            />
+            <Input
+              label="New Password"
+              name="newPassword"
+              type="password"
+              value={form.newPassword}
+              onChange={handleChange}
+              error={errors.newPassword}
+              required
+              autoComplete="new-password"
+              hint="6–12 characters. Letters, numbers, and @#$%^&+=! only."
+            />
+            <Input
+              label="Confirm New Password"
+              name="confirmPassword"
+              type="password"
+              value={form.confirmPassword}
+              onChange={handleChange}
+              required
+              autoComplete="new-password"
+            />
+            <Button type="submit" disabled={loading} className="btn-block btn-lg">
+              {loading ? 'Saving…' : 'Reset Password'}
+            </Button>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default ResetPassword

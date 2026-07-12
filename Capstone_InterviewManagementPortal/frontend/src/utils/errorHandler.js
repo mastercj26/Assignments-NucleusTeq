@@ -1,26 +1,16 @@
 export const getErrorMessage = (error) => {
-  if (!error.response) {
-    return 'Cannot connect to server. Please check your network.';
+  if (!error.response) return 'Network error. Please check your connection.'
+
+  const { data } = error.response
+
+  if (data?.detail) {
+    if (Array.isArray(data.detail)) {
+      return data.detail.map((e) => e.msg || e.message || String(e)).join(', ')
+    }
+    return String(data.detail)
   }
 
-  const { status, data } = error.response;
+  if (data?.message) return String(data.message)
 
-  // FastAPI validation error (422)
-  if (status === 422 && data.detail && Array.isArray(data.detail)) {
-    const firstError = data.detail[0];
-    const field = firstError.loc[firstError.loc.length - 1];
-    return `${field}: ${firstError.msg}`;
-  }
-
-  // Our global handler format
-  if (data?.message) {
-    return data.message;
-  }
-
-  // FastAPI simple error format
-  if (data?.detail && typeof data.detail === 'string') {
-    return data.detail;
-  }
-
-  return 'An unexpected error occurred';
-};
+  return 'Something went wrong. Please try again.'
+}

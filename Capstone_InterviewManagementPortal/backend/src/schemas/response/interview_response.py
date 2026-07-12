@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 from src.enums.interview_enums import InterviewStatus
 
+
 class InterviewResponse(BaseModel):
     id: str
     candidate_id: str
@@ -14,6 +15,7 @@ class InterviewResponse(BaseModel):
     status: InterviewStatus
     created_at: str
     updated_at: str
+
 
 class InterviewListResponse(BaseModel):
     interviews: List[InterviewResponse]

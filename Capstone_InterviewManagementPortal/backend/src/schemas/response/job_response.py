@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from src.enums.job_enums import EmploymentType, JobStatus
 
+
 class JobResponse(BaseModel):
     id: str
     job_title: str
@@ -14,6 +15,7 @@ class JobResponse(BaseModel):
     status: JobStatus
     created_at: str
     updated_at: str
+
 
 class JobListResponse(BaseModel):
     jobs: List[JobResponse]

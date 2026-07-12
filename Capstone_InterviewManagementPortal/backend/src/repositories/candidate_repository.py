@@ -1,127 +1,141 @@
 from src.core.database import Database
 from src.exceptions.custom_exceptions import DuplicateException, NotFoundException
 from bson import ObjectId
-from datetime import datetime
+from bson.errors import InvalidId
+from datetime import datetime, timezone
 from gridfs import GridFS
+
 
 class CandidateRepository:
     collection = Database.get_collection("candidates")
-    fs = GridFS(Database.db)   # GridFS instance
+    fs = GridFS(Database.connect())
 
     @staticmethod
-    def _normalize_candidate(cand):
+    def _to_object_id(id_str: str) -> ObjectId:
+        try:
+            return ObjectId(id_str)
+        except (InvalidId, TypeError):
+            raise NotFoundException("Candidate not found")
+
+    @staticmethod
+    def _normalize(cand: dict) -> dict:
         if not cand:
             return None
-        cand_copy = cand.copy()
-        cand_copy["id"] = str(cand_copy.pop("_id"))
-        return cand_copy
+        cand = cand.copy()
+        cand["id"] = str(cand.pop("_id"))
+        return cand
 
     @staticmethod
     def check_unique(email: str, mobile: str, exclude_id: str = None):
-        query = {"email": email}
+        email_query = {"email": email}
         if exclude_id:
-            query["_id"] = {"$ne": ObjectId(exclude_id)}
-        if CandidateRepository.collection.find_one(query):
+            email_query["_id"] = {"$ne": ObjectId(exclude_id)}
+        if CandidateRepository.collection.find_one(email_query):
             raise DuplicateException("Email already exists")
 
-        query = {"mobile_number": mobile}
+        mobile_query = {"mobile_number": mobile}
         if exclude_id:
-            query["_id"] = {"$ne": ObjectId(exclude_id)}
-        if CandidateRepository.collection.find_one(query):
+            mobile_query["_id"] = {"$ne": ObjectId(exclude_id)}
+        if CandidateRepository.collection.find_one(mobile_query):
             raise DuplicateException("Mobile number already exists")
 
     @staticmethod
-    def create(candidate_data: dict):
-        CandidateRepository.check_unique(
-            candidate_data["email"],
-            candidate_data["mobile_number"]
-        )
-        candidate_data["created_at"] = datetime.utcnow().isoformat()
-        candidate_data["updated_at"] = datetime.utcnow().isoformat()
-        result = CandidateRepository.collection.insert_one(candidate_data)
-        candidate_data["_id"] = result.inserted_id
-        return CandidateRepository._normalize_candidate(candidate_data)
+    def create(data: dict) -> dict:
+        CandidateRepository.check_unique(data["email"], data["mobile_number"])
+        now = datetime.now(timezone.utc).isoformat()
+        data["created_at"] = now
+        data["updated_at"] = now
+        result = CandidateRepository.collection.insert_one(data)
+        data["_id"] = result.inserted_id
+        return CandidateRepository._normalize(data)
 
     @staticmethod
-    def get_by_id(candidate_id: str):
-        cand = CandidateRepository.collection.find_one({"_id": ObjectId(candidate_id)})
+    def get_by_id(candidate_id: str) -> dict:
+        oid = CandidateRepository._to_object_id(candidate_id)
+        cand = CandidateRepository.collection.find_one({"_id": oid})
         if not cand:
             raise NotFoundException("Candidate not found")
-        return CandidateRepository._normalize_candidate(cand)
+        return CandidateRepository._normalize(cand)
 
     @staticmethod
-    def get_all(skip: int = 0, limit: int = 10):
-        candidates = CandidateRepository.collection.find().skip(skip).limit(limit)
-        return [CandidateRepository._normalize_candidate(c) for c in candidates]
+    def get_all(skip: int = 0, limit: int = 10, filter_by: dict = None) -> list:
+        cursor = (
+            CandidateRepository.collection.find(filter_by or {})
+            .sort("_id", -1)
+            .skip(skip)
+            .limit(limit)
+        )
+        return [CandidateRepository._normalize(c) for c in cursor]
 
     @staticmethod
-    def count():
-        return CandidateRepository.collection.count_documents({})
+    def count(filter_by: dict = None) -> int:
+        return CandidateRepository.collection.count_documents(filter_by or {})
 
     @staticmethod
-    def update(candidate_id: str, update_data: dict):
-        if "email" in update_data or "mobile_number" in update_data:
-            current = CandidateRepository.collection.find_one({"_id": ObjectId(candidate_id)})
+    def update(candidate_id: str, data: dict) -> dict:
+        if "email" in data or "mobile_number" in data:
+            current = CandidateRepository.collection.find_one(
+                {"_id": CandidateRepository._to_object_id(candidate_id)}
+            )
             if not current:
                 raise NotFoundException("Candidate not found")
-            email = update_data.get("email", current.get("email"))
-            mobile = update_data.get("mobile_number", current.get("mobile_number"))
+            email = data.get("email", current.get("email"))
+            mobile = data.get("mobile_number", current.get("mobile_number"))
             CandidateRepository.check_unique(email, mobile, exclude_id=candidate_id)
 
-        update_data["updated_at"] = datetime.utcnow().isoformat()
+        data["updated_at"] = datetime.now(timezone.utc).isoformat()
         result = CandidateRepository.collection.update_one(
-            {"_id": ObjectId(candidate_id)},
-            {"$set": update_data}
+            {"_id": CandidateRepository._to_object_id(candidate_id)}, {"$set": data}
         )
         if result.matched_count == 0:
             raise NotFoundException("Candidate not found")
         return CandidateRepository.get_by_id(candidate_id)
 
     @staticmethod
-    def save_resume(candidate_id: str, file_data: bytes, filename: str, content_type: str = "application/pdf"):
+    def save_resume(candidate_id: str, file_data: bytes, filename: str) -> str:
         file_id = CandidateRepository.fs.put(
-            file_data,
-            filename=filename,
-            content_type=content_type,
-            candidate_id=candidate_id
+            file_data, filename=filename, content_type="application/pdf", candidate_id=candidate_id
         )
         CandidateRepository.collection.update_one(
-            {"_id": ObjectId(candidate_id)},
-            {"$set": {
-                "resume_file_id": str(file_id),
-                "resume_filename": filename,
-                "updated_at": datetime.utcnow().isoformat()
-            }}
+            {"_id": CandidateRepository._to_object_id(candidate_id)},
+            {
+                "$set": {
+                    "resume_file_id": str(file_id),
+                    "resume_filename": filename,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }
+            },
         )
         return str(file_id)
 
     @staticmethod
     def get_resume(file_id: str):
         try:
-            file = CandidateRepository.fs.get(ObjectId(file_id))
-            return file
+            return CandidateRepository.fs.get(ObjectId(file_id))
         except Exception:
-            return None
+            raise NotFoundException("Resume not found")
 
     @staticmethod
     def add_status_history(candidate_id: str, status: str, changed_by: str, notes: str = None):
         entry = {
             "status": status,
-            "changed_at": datetime.utcnow().isoformat(),
+            "changed_at": datetime.now(timezone.utc).isoformat(),
             "changed_by": changed_by,
-            "notes": notes
+            "notes": notes,
         }
         CandidateRepository.collection.update_one(
-            {"_id": ObjectId(candidate_id)},
-            {"$push": {"status_history": entry}, "$set": {"updated_at": datetime.utcnow().isoformat()}}
+            {"_id": CandidateRepository._to_object_id(candidate_id)},
+            {
+                "$push": {"status_history": entry},
+                "$set": {"updated_at": datetime.now(timezone.utc).isoformat()},
+            },
         )
 
     @staticmethod
-    def get_status_history(candidate_id: str):
-        candidate = CandidateRepository.collection.find_one(
-            {"_id": ObjectId(candidate_id)},
-            {"status_history": 1}
+    def get_status_history(candidate_id: str) -> list:
+        doc = CandidateRepository.collection.find_one(
+            {"_id": CandidateRepository._to_object_id(candidate_id)}, {"status_history": 1}
         )
-        if not candidate:
+        if not doc:
             raise NotFoundException("Candidate not found")
-        return candidate.get("status_history", [])
+        return doc.get("status_history", [])
