@@ -9,7 +9,8 @@ class InterviewResponse(BaseModel):
     candidate_id: str
     job_id: str
     interview_date: datetime
-    interview_time: str
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
     assigned_interviewer_id: str
     focus_tech_areas: List[str]
     status: InterviewStatus

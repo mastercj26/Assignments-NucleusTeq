@@ -130,7 +130,7 @@ function SubmitFeedback() {
           <h1 className="page-title">Submit Feedback</h1>
           {interview && (
             <p className="page-subtitle">
-              Interview on {formatDate(interview.interview_date)} at {interview.interview_time}
+              Interview on {formatDate(interview.interview_date)}, {interview.start_time} – {interview.end_time}
             </p>
           )}
         </div>

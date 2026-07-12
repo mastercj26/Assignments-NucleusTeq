@@ -31,15 +31,15 @@ class UserService:
         }
 
     @staticmethod
-    def list_interviewers(interview_date=None, interview_time=None) -> list:
+    def list_interviewers(interview_date=None, start_time=None, end_time=None) -> list:
         # used by HR while scheduling, exposes only basic fields.
         # when a slot is given, interviewers already booked in it are left out.
         interviewers = UserRepository.get_users_by_role(UserRole.INTERVIEWER)
 
         busy_ids = []
-        if interview_date is not None and interview_time:
+        if interview_date is not None and start_time and end_time:
             busy_ids = InterviewRepository.get_busy_interviewer_ids(
-                interview_date, interview_time
+                interview_date, start_time, end_time
             )
 
         return [

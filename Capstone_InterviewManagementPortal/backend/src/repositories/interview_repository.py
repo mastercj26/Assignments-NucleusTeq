@@ -69,16 +69,19 @@ class InterviewRepository:
     def has_conflict(
         interviewer_id: str,
         interview_date: datetime,
-        interview_time: str,
+        start_time: str,
+        end_time: str,
         exclude_id: str = None,
     ) -> bool:
-        # same interviewer, same day, same time slot
+        # two intervals overlap when one starts before the other ends.
+        # HH:MM strings compare correctly as plain strings.
         day_start = interview_date.replace(hour=0, minute=0, second=0, microsecond=0)
         day_end = day_start + timedelta(days=1)
         query = {
             "assigned_interviewer_id": interviewer_id,
             "interview_date": {"$gte": day_start, "$lt": day_end},
-            "interview_time": interview_time.strip(),
+            "start_time": {"$lt": end_time},
+            "end_time": {"$gt": start_time},
             "status": InterviewStatus.SCHEDULED,
         }
         if exclude_id:
@@ -92,15 +95,16 @@ class InterviewRepository:
         )
 
     @staticmethod
-    def get_busy_interviewer_ids(interview_date: datetime, interview_time: str) -> list:
-        # interviewers having a scheduled interview on the same day + time
+    def get_busy_interviewer_ids(interview_date: datetime, start_time: str, end_time: str) -> list:
+        # interviewers whose scheduled interview overlaps the given window
         day_start = interview_date.replace(hour=0, minute=0, second=0, microsecond=0)
         day_end = day_start + timedelta(days=1)
         return InterviewRepository.collection.distinct(
             "assigned_interviewer_id",
             {
                 "interview_date": {"$gte": day_start, "$lt": day_end},
-                "interview_time": interview_time.strip(),
+                "start_time": {"$lt": end_time},
+                "end_time": {"$gt": start_time},
                 "status": InterviewStatus.SCHEDULED,
             },
         )

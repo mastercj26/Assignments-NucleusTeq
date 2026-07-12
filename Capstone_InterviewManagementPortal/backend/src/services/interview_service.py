@@ -22,12 +22,12 @@ class InterviewService:
         return interviewer
 
     @staticmethod
-    def _ensure_slot_available(interviewer_id, interview_date, interview_time, exclude_id=None):
+    def _ensure_slot_available(interviewer_id, interview_date, start_time, end_time, exclude_id=None):
         if InterviewRepository.has_conflict(
-            interviewer_id, interview_date, interview_time, exclude_id=exclude_id
+            interviewer_id, interview_date, start_time, end_time, exclude_id=exclude_id
         ):
             raise DuplicateException(
-                "Interviewer already has an interview scheduled in this time slot"
+                "Interviewer already has an interview in this time range"
             )
 
     @staticmethod
@@ -36,7 +36,10 @@ class InterviewService:
         JobRepository.get_by_id(data["job_id"])
         InterviewService._validate_interviewer(data["assigned_interviewer_id"])
         InterviewService._ensure_slot_available(
-            data["assigned_interviewer_id"], data["interview_date"], data["interview_time"]
+            data["assigned_interviewer_id"],
+            data["interview_date"],
+            data["start_time"],
+            data["end_time"],
         )
 
         data["status"] = InterviewStatus.SCHEDULED
@@ -82,18 +85,21 @@ class InterviewService:
     @staticmethod
     def update_interview(interview_id: str, data: dict) -> dict:
         # check for double booking if interviewer/date/time is changing
-        if {"assigned_interviewer_id", "interview_date", "interview_time"} & data.keys():
+        if {"assigned_interviewer_id", "interview_date", "start_time", "end_time"} & data.keys():
             existing = InterviewRepository.get_by_id(interview_id)
             interviewer_id = data.get(
                 "assigned_interviewer_id", existing["assigned_interviewer_id"]
             )
             interview_date = data.get("interview_date", existing["interview_date"])
-            interview_time = data.get("interview_time", existing["interview_time"])
+            start_time = data.get("start_time", existing.get("start_time"))
+            end_time = data.get("end_time", existing.get("end_time"))
+            if start_time and end_time and end_time <= start_time:
+                raise ValidationException("End time must be after start time")
 
             if "assigned_interviewer_id" in data:
                 InterviewService._validate_interviewer(interviewer_id)
             InterviewService._ensure_slot_available(
-                interviewer_id, interview_date, interview_time, exclude_id=interview_id
+                interviewer_id, interview_date, start_time, end_time, exclude_id=interview_id
             )
 
         return InterviewRepository.update(interview_id, data)

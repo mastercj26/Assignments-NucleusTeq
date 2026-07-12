@@ -37,10 +37,11 @@ def list_users(
 @router.get("/interviewers", response_model=list[InterviewerOption])
 def list_interviewers(
     interview_date: Optional[datetime] = Query(None),
-    interview_time: Optional[str] = Query(None),
+    start_time: Optional[str] = Query(None),
+    end_time: Optional[str] = Query(None),
     current_user: dict = Depends(_hr_only),
 ):
-    return UserService.list_interviewers(interview_date, interview_time)
+    return UserService.list_interviewers(interview_date, start_time, end_time)
 
 
 @router.get("/{user_id}", response_model=UserResponse)

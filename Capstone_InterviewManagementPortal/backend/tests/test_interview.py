@@ -101,7 +101,8 @@ def test_schedule_interview_success():
             "candidate_id": candidate_id,
             "job_id": job_id,
             "interview_date": "2026-07-15T10:00:00",
-            "interview_time": "10:00 AM",
+            "start_time": "10:00",
+        "end_time": "11:00",
             "assigned_interviewer_id": interviewer_id,
             "focus_tech_areas": ["Python", "FastAPI"],
         },
@@ -130,7 +131,8 @@ def test_schedule_interview_invalid_candidate():
             "candidate_id": "000000000000000000000000",
             "job_id": job_id,
             "interview_date": "2026-07-15T10:00:00",
-            "interview_time": "10:00 AM",
+            "start_time": "10:00",
+        "end_time": "11:00",
             "assigned_interviewer_id": interviewer_id,
             "focus_tech_areas": ["Python"],
         },
@@ -152,7 +154,8 @@ def test_schedule_interview_unauthorized_role():
             "candidate_id": candidate_id,
             "job_id": job_id,
             "interview_date": "2026-07-15T10:00:00",
-            "interview_time": "10:00 AM",
+            "start_time": "10:00",
+        "end_time": "11:00",
             "assigned_interviewer_id": interviewer_id,
             "focus_tech_areas": ["Python"],
         },
@@ -176,7 +179,8 @@ def test_list_interviews_as_hr():
                 "candidate_id": candidate_id,
                 "job_id": job_id,
                 "interview_date": "2026-07-15T10:00:00",
-                "interview_time": f"{9 + idx}:00 AM",
+                "start_time": f"{9 + idx:02d}:00",
+            "end_time": f"{10 + idx:02d}:00",
                 "assigned_interviewer_id": interviewer_id,
                 "focus_tech_areas": ["Python"],
             },
@@ -207,7 +211,8 @@ def test_list_interviews_as_interviewer_filtered():
             "candidate_id": candidate_id,
             "job_id": job_id,
             "interview_date": "2026-07-15T10:00:00",
-            "interview_time": "10:00 AM",
+            "start_time": "10:00",
+        "end_time": "11:00",
             "assigned_interviewer_id": interviewer_id,
             "focus_tech_areas": ["Python"],
         },
@@ -220,7 +225,8 @@ def test_list_interviews_as_interviewer_filtered():
             "candidate_id": candidate_id,
             "job_id": job_id,
             "interview_date": "2026-07-16T10:00:00",
-            "interview_time": "11:00 AM",
+            "start_time": "11:00",
+        "end_time": "12:00",
             "assigned_interviewer_id": other_id,
             "focus_tech_areas": ["JavaScript"],
         },
@@ -246,7 +252,8 @@ def test_get_interview_success():
             "candidate_id": candidate_id,
             "job_id": job_id,
             "interview_date": "2026-07-15T10:00:00",
-            "interview_time": "10:00 AM",
+            "start_time": "10:00",
+        "end_time": "11:00",
             "assigned_interviewer_id": interviewer_id,
             "focus_tech_areas": ["Python"],
         },
@@ -273,7 +280,8 @@ def test_get_interview_denied_for_other_interviewer():
             "candidate_id": candidate_id,
             "job_id": job_id,
             "interview_date": "2026-07-15T10:00:00",
-            "interview_time": "10:00 AM",
+            "start_time": "10:00",
+        "end_time": "11:00",
             "assigned_interviewer_id": interviewer_id,
             "focus_tech_areas": ["Python"],
         },
@@ -291,7 +299,7 @@ def test_get_interview_denied_for_other_interviewer():
 
 
 def test_schedule_interview_slot_conflict():
-    """Same interviewer + same slot should give 409."""
+    """Overlapping time range for the same interviewer should give 409."""
     admin_token = get_hr_token()
     _, interviewer_id = get_interviewer_token_and_id()
     job_id = create_job(admin_token)
@@ -301,7 +309,8 @@ def test_schedule_interview_slot_conflict():
         "candidate_id": candidate_id,
         "job_id": job_id,
         "interview_date": "2026-07-20T10:00:00",
-        "interview_time": "10:00 AM",
+        "start_time": "10:00",
+        "end_time": "11:00",
         "assigned_interviewer_id": interviewer_id,
         "focus_tech_areas": ["Python"],
     }
@@ -314,12 +323,12 @@ def test_schedule_interview_slot_conflict():
         "/interviews/", json=payload, headers={"Authorization": f"Bearer {admin_token}"}
     )
     assert res.status_code == 409
-    assert "time slot" in res.json()["message"].lower()
+    assert "time range" in res.json()["message"].lower()
 
     # different time should work
     res = client.post(
         "/interviews/",
-        json={**payload, "interview_time": "2:00 PM"},
+        json={**payload, "start_time": "14:00", "end_time": "15:00"},
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert res.status_code == 201
@@ -337,7 +346,8 @@ def test_reassign_interviewer_slot_conflict():
         "candidate_id": candidate_id,
         "job_id": job_id,
         "interview_date": "2026-07-21T10:00:00",
-        "interview_time": "11:00 AM",
+        "start_time": "11:00",
+        "end_time": "12:00",
         "focus_tech_areas": ["Python"],
     }
     res = client.post(
@@ -384,7 +394,7 @@ def test_interviewer_availability_filter():
         "candidate_id": candidate_id,
         "job_id": job_id,
         "interview_date": "2026-09-01T10:00:00",
-        "interview_time": "10:00",
+        "start_time": "10:00", "end_time": "11:00",
         "assigned_interviewer_id": busy_id,
         "focus_tech_areas": ["Python"],
     }, headers={"Authorization": f"Bearer {hr_token}"})
@@ -392,7 +402,7 @@ def test_interviewer_availability_filter():
 
     # same slot -> busy interviewer hidden, free one still there
     res = client.get(
-        "/users/interviewers?interview_date=2026-09-01T10:00:00&interview_time=10:00",
+        "/users/interviewers?interview_date=2026-09-01T10:00:00&start_time=10:30&end_time=11:30",
         headers={"Authorization": f"Bearer {hr_token}"},
     )
     assert res.status_code == 200
@@ -402,7 +412,7 @@ def test_interviewer_availability_filter():
 
     # different time same day -> everyone available
     res = client.get(
-        "/users/interviewers?interview_date=2026-09-01T10:00:00&interview_time=14:00",
+        "/users/interviewers?interview_date=2026-09-01T10:00:00&start_time=14:00&end_time=15:00",
         headers={"Authorization": f"Bearer {hr_token}"},
     )
     ids = [u["id"] for u in res.json()]
@@ -412,3 +422,44 @@ def test_interviewer_availability_filter():
     res = client.get("/users/interviewers", headers={"Authorization": f"Bearer {hr_token}"})
     ids = [u["id"] for u in res.json()]
     assert busy_id in ids and free_id in ids
+
+
+def test_overlapping_ranges_are_rejected():
+    """Partial overlaps conflict, back-to-back slots do not."""
+    hr_token = get_hr_token()
+    _, interviewer_id = get_interviewer_token_and_id()
+    job_id = create_job(hr_token)
+    candidate_id = create_candidate(hr_token, job_id)
+    auth = {"Authorization": f"Bearer {hr_token}"}
+
+    base = {
+        "candidate_id": candidate_id,
+        "job_id": job_id,
+        "interview_date": "2026-10-05T00:00:00",
+        "assigned_interviewer_id": interviewer_id,
+        "focus_tech_areas": ["Python"],
+    }
+
+    # 10:00 - 11:00 booked
+    res = client.post("/interviews/", json={**base, "start_time": "10:00", "end_time": "11:00"}, headers=auth)
+    assert res.status_code == 201
+
+    # 10:30 - 11:30 overlaps the middle -> rejected
+    res = client.post("/interviews/", json={**base, "start_time": "10:30", "end_time": "11:30"}, headers=auth)
+    assert res.status_code == 409
+
+    # 09:30 - 10:30 overlaps the start -> rejected
+    res = client.post("/interviews/", json={**base, "start_time": "09:30", "end_time": "10:30"}, headers=auth)
+    assert res.status_code == 409
+
+    # 09:00 - 12:00 fully covers it -> rejected
+    res = client.post("/interviews/", json={**base, "start_time": "09:00", "end_time": "12:00"}, headers=auth)
+    assert res.status_code == 409
+
+    # 11:00 - 12:00 starts exactly when the other ends -> allowed
+    res = client.post("/interviews/", json={**base, "start_time": "11:00", "end_time": "12:00"}, headers=auth)
+    assert res.status_code == 201
+
+    # end before start -> validation error
+    res = client.post("/interviews/", json={**base, "start_time": "15:00", "end_time": "14:00"}, headers=auth)
+    assert res.status_code == 422

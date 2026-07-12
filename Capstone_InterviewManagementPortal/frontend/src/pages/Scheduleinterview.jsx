@@ -16,7 +16,8 @@ const initialForm = {
   candidate_id: '',
   job_id: '',
   interview_date: '',
-  interview_time: '',
+  start_time: '',
+  end_time: '',
   assigned_interviewer_id: '',
   focus_tech_areas: [],
 }
@@ -60,17 +61,20 @@ function ScheduleInterview() {
     if (!form.job_id.trim()) errs.job_id = 'Job ID is required'
     const dateErr = validateFutureDate(form.interview_date)
     if (dateErr) errs.interview_date = dateErr
-    if (!form.interview_time) errs.interview_time = 'Interview time is required'
+    if (!form.start_time) errs.start_time = 'Start time is required'
+    if (!form.end_time) errs.end_time = 'End time is required'
+    else if (form.start_time && form.end_time <= form.start_time) errs.end_time = 'End time must be after start time'
     if (!form.assigned_interviewer_id.trim()) errs.assigned_interviewer_id = 'Interviewer is required'
     if (form.focus_tech_areas.length === 0) errs.focus_tech_areas = 'At least one focus area is required'
     return errs
   }
 
   useEffect(() => {
-    if (!form.interview_date || !form.interview_time) return
+    if (!form.interview_date || !form.start_time || !form.end_time) return
     const params = {
       interview_date: new Date(form.interview_date).toISOString(),
-      interview_time: form.interview_time,
+      start_time: form.start_time,
+      end_time: form.end_time,
     }
     userApi.listInterviewers(params)
       .then((res) => {
@@ -81,7 +85,7 @@ function ScheduleInterview() {
         }
       })
       .catch(() => {})
-  }, [form.interview_date, form.interview_time])
+  }, [form.interview_date, form.start_time, form.end_time])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -113,7 +117,8 @@ function ScheduleInterview() {
         candidate_id: form.candidate_id,
         job_id: form.job_id,
         interview_date: new Date(form.interview_date).toISOString(),
-        interview_time: form.interview_time,
+        start_time: form.start_time,
+        end_time: form.end_time,
         assigned_interviewer_id: form.assigned_interviewer_id,
         focus_tech_areas: form.focus_tech_areas,
       })
@@ -178,24 +183,33 @@ function ScheduleInterview() {
                 required
               />
               <Input
-                label="Interview Time"
-                name="interview_time"
+                label="Start Time"
+                name="start_time"
                 type="time"
-                value={form.interview_time}
+                value={form.start_time}
                 onChange={handleChange}
-                error={errors.interview_time}
+                error={errors.start_time}
+                required
+              />
+              <Input
+                label="End Time"
+                name="end_time"
+                type="time"
+                value={form.end_time}
+                onChange={handleChange}
+                error={errors.end_time}
                 required
               />
             </div>
 
-            {interviewerMode === 'dropdown' && interviewers.length === 0 && form.interview_date && form.interview_time && (
+            {interviewerMode === 'dropdown' && interviewers.length === 0 && form.interview_date && form.start_time && form.end_time && (
               <Alert type="warning">No interviewers are free at this time. Pick a different slot.</Alert>
             )}
 
             {interviewerMode === 'dropdown' && interviewers.length > 0 ? (
               <Select
                 label="Interviewer"
-                hint={form.interview_date && form.interview_time
+                hint={form.interview_date && form.start_time && form.end_time
                   ? 'Showing interviewers free at the selected date and time'
                   : 'Pick a date and time to filter by availability'}
                 name="assigned_interviewer_id"

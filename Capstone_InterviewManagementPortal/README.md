@@ -62,7 +62,7 @@ pytest --cov=src        # run with coverage report
 
 The test suite uses mongomock (an in-memory MongoDB), so it runs on any machine or CI runner without a database installed.
 
-**Current results: 51 tests passing, 80% overall line coverage** (target from the spec is 80-90%).
+**Current results: 55 tests passing, ~80% overall line coverage** (target from the spec is 80-90%).
 
 Coverage by area (from `pytest --cov=src`):
 
@@ -144,8 +144,9 @@ Other rules that hold everywhere:
 
 - **First login forces a password reset.** New users are created with the default password `admin123` and cannot get a token until they change it.
 - **Disabled accounts cannot log in**, even with the right password.
-- **No double-booking.** An interviewer who already has a scheduled interview in a slot (same day + same time) cannot be scheduled or reassigned into it. Completed or cancelled interviews free the slot.
+- **No double-booking.** Every interview has a start and end time, and an interviewer cannot be scheduled or reassigned into a time range that overlaps one of their existing scheduled interviews. Back-to-back interviews are fine; completed or cancelled ones free the slot. The scheduling form also filters the interviewer dropdown to whoever is actually free in the chosen window.
 - **Feedback drives candidate status.** SELECT sets `SELECTED`, REJECT sets `REJECTED`, NEXT_ROUND sets `INTERVIEW_COMPLETED`. Every status change, manual or automatic, is recorded in the candidate's history with who changed it and when.
+- **Newest first.** All listings (users, jobs, candidates, interviews) show the most recently created records on top.
 
 ## Candidate lifecycle
 
@@ -162,14 +163,14 @@ All endpoints except login and reset-password require a Bearer token. List endpo
 | Area | Endpoints |
 |---|---|
 | Auth | `POST /auth/login`, `POST /auth/reset-password`, `POST /auth/logout` |
-| Users | `POST/GET /users`, `GET/PUT /users/{id}`, `PATCH /users/{id}/disable` |
+| Users | `POST/GET /users`, `GET /users/interviewers`, `GET/PUT /users/{id}`, `PATCH /users/{id}/disable` |
 | Jobs | `POST/GET /jobs`, `GET/PUT /jobs/{id}` |
 | Candidates | `POST/GET /candidates`, `GET/PUT /candidates/{id}`, `POST/GET /candidates/{id}/resume`, `PATCH /candidates/{id}/status`, `GET /candidates/{id}/status-history` |
 | Interviews | `POST/GET /interviews`, `GET/PUT /interviews/{id}` |
 | Feedback | `POST /feedbacks`, `GET /feedbacks/interview/{id}` |
 | Dashboard | `GET /dashboard/hr`, `GET /dashboard/interviewer` |
 
-Full request/response schemas are in Swagger. A ready-to-import Postman collection is included at the repo root (`InterviewManagementPortal.postman_collection.json`) with automatic token handling and chained ids for running the whole happy path top to bottom.
+`GET /users/interviewers` accepts optional `interview_date`, `start_time` and `end_time` query params and then returns only interviewers who are free in that window. Full request/response schemas are in Swagger.
 
 ## Validation rules
 
@@ -179,7 +180,7 @@ Full request/response schemas are in Swagger. A ready-to-import Postman collecti
 - **Mobile numbers** are exactly 10 digits and unique across candidates. Candidate emails are unique too.
 - **Resumes** must be PDFs, checked by extension and `%PDF` magic bytes, minimum 100 bytes, maximum 10 MB, stored in GridFS.
 - **Feedback ratings** (technical, communication, problem solving) must each be between 1 and 5.
-- **Scheduling** validates that the assigned user actually has the interviewer role and is free in that slot.
+- **Interview times** are HH:MM (24 hour), end time must be after start time, and the interviewer must actually have the interviewer role and be free in that range.
 
 Validation happens on both sides: pydantic validators return 422 from the API, and the React forms run the same rules client-side for instant feedback.
 
@@ -188,7 +189,7 @@ Validation happens on both sides: pydantic validators return 422 from the API, a
 Every error returns the same JSON shape:
 
 ```json
-{ "success": false, "message": "Interviewer already has an interview scheduled in this time slot", "status_code": 409 }
+{ "success": false, "message": "Interviewer already has an interview in this time range", "status_code": 409 }
 ```
 
 Application and error logs go to `logs/app.log` and stdout. Logs contain only the method, path and status code. No request bodies, emails or other personal data are written to logs.

@@ -39,7 +39,8 @@ function InterviewDetails() {
       setInterview(ivRes.data)
       setEditForm({
         interview_date: ivRes.data.interview_date?.split('T')[0] || '',
-        interview_time: ivRes.data.interview_time || '',
+        start_time: ivRes.data.start_time || '',
+        end_time: ivRes.data.end_time || '',
         assigned_interviewer_id: ivRes.data.assigned_interviewer_id || '',
         focus_tech_areas: ivRes.data.focus_tech_areas || [],
         status: ivRes.data.status || 'scheduled',
@@ -70,7 +71,9 @@ function InterviewDetails() {
     const errs = {}
     const dateErr = validateFutureDate(editForm.interview_date)
     if (dateErr) errs.interview_date = dateErr
-    if (!editForm.interview_time) errs.interview_time = 'Time is required'
+    if (!editForm.start_time) errs.start_time = 'Start time is required'
+    if (!editForm.end_time) errs.end_time = 'End time is required'
+    else if (editForm.start_time && editForm.end_time <= editForm.start_time) errs.end_time = 'End time must be after start time'
     if (!editForm.assigned_interviewer_id.trim()) errs.assigned_interviewer_id = 'Interviewer ID is required'
     if (Object.keys(errs).length > 0) { setEditErrors(errs); return }
     setEditErrors({})
@@ -79,7 +82,8 @@ function InterviewDetails() {
     try {
       await interviewApi.update(id, {
         interview_date: new Date(editForm.interview_date).toISOString(),
-        interview_time: editForm.interview_time,
+        start_time: editForm.start_time,
+        end_time: editForm.end_time,
         assigned_interviewer_id: editForm.assigned_interviewer_id,
         focus_tech_areas: editForm.focus_tech_areas,
         status: editForm.status,
@@ -143,15 +147,26 @@ function InterviewDetails() {
                   {editErrors.interview_date && <p className="form-error">{editErrors.interview_date}</p>}
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Time <span className="required">*</span></label>
+                  <label className="form-label">Start Time <span className="required">*</span></label>
                   <input
                     type="time"
-                    name="interview_time"
-                    value={editForm.interview_time}
+                    name="start_time"
+                    value={editForm.start_time}
                     onChange={handleEditChange}
                     className="form-control"
                   />
-                  {editErrors.interview_time && <p className="form-error">{editErrors.interview_time}</p>}
+                  {editErrors.start_time && <p className="form-error">{editErrors.start_time}</p>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">End Time <span className="required">*</span></label>
+                  <input
+                    type="time"
+                    name="end_time"
+                    value={editForm.end_time}
+                    onChange={handleEditChange}
+                    className="form-control"
+                  />
+                  {editErrors.end_time && <p className="form-error">{editErrors.end_time}</p>}
                 </div>
               </div>
 
@@ -205,7 +220,7 @@ function InterviewDetails() {
                 </div>
                 <div className="detail-item">
                   <div className="detail-label">Time</div>
-                  <div className="detail-value">{interview.interview_time}</div>
+                  <div className="detail-value">{interview.start_time} – {interview.end_time}</div>
                 </div>
                 <div className="detail-item">
                   <div className="detail-label">Candidate ID</div>

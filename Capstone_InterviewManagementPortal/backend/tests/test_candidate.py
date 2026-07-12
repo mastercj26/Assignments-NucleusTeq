@@ -294,7 +294,8 @@ def test_resume_download_permissions():
         "candidate_id": candidate_id,
         "job_id": job_id,
         "interview_date": "2026-08-01T10:00:00",
-        "interview_time": "10:00 AM",
+        "start_time": "10:00",
+        "end_time": "11:00",
         "assigned_interviewer_id": assigned_id,
         "focus_tech_areas": ["Python"],
     }, headers=hr_auth)

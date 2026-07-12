@@ -81,7 +81,7 @@ function Interviews() {
                       <tr key={iv.id}>
                         <td className="text-sm text-muted">{iv.candidate_id}</td>
                         <td>{formatDate(iv.interview_date)}</td>
-                        <td>{iv.interview_time}</td>
+                        <td>{iv.start_time} – {iv.end_time}</td>
                         <td className="text-sm text-muted">{iv.assigned_interviewer_id}</td>
                         <td>
                           <div className="tags mt-0">
