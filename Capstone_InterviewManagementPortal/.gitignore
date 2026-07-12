@@ -9,8 +9,7 @@ env/
 # environment files (secrets)
 .env
 .env.*
-!.env.example
-
+.env.example
 # test & coverage output
 .pytest_cache/
 .coverage
