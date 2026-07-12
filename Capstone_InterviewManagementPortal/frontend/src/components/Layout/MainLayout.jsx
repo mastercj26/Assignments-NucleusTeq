@@ -1,17 +1,16 @@
-import React from 'react';
-import Sidebar from './Sidebar';
-import Header from './Header';
+import Sidebar from './Sidebar'
+import Header from './Header'
 
-const MainLayout = ({ children }) => {
+function MainLayout({ children }) {
   return (
-    <div style={{ display: 'flex' }}>
+    <div className="app-layout">
       <Sidebar />
-      <div style={{ flex: 1, padding: '20px' }}>
+      <div className="main-content">
         <Header />
-        <main>{children}</main>
+        <main className="page-content">{children}</main>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default MainLayout;
+export default MainLayout
